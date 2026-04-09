@@ -1,0 +1,43 @@
+-- Database: vms_db
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    company VARCHAR(255),
+    phone VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE visits (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    full_name VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    visit_purpose TEXT NOT NULL,
+    person_to_meet VARCHAR(255) NOT NULL,
+    visit_date DATE NOT NULL,
+    qr_code TEXT UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, CHECKED_IN, CHECKED_OUT
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE work_permits (
+    id SERIAL PRIMARY KEY,
+    visitor_id INTEGER REFERENCES visits(id) ON DELETE CASCADE,
+    worker_name VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    job_type VARCHAR(255) NOT NULL,
+    work_location VARCHAR(255) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    pic_company VARCHAR(255) NOT NULL,
+    permit_file TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
