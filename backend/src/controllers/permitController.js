@@ -41,9 +41,18 @@ exports.createPermit = async (req, res) => {
 // Get all work permits
 exports.getAllPermits = async (req, res) => {
   try {
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    let visitWhereClause = {};
+    if (userRole === 'USER') {
+      visitWhereClause.user_id = userId;
+    }
+
     const permits = await WorkPermit.findAll({
       include: [{ 
         model: Visit, 
+        where: Object.keys(visitWhereClause).length > 0 ? visitWhereClause : undefined,
         attributes: ['full_name', 'visit_purpose', 'visit_date', 'status'],
         include: [{ model: User, attributes: ['username']}]
       }],

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { ShieldCheck, CheckCircle, XCircle, Search, Users, LogIn, LogOut, Clock3, Briefcase, AlertCircle, Camera, Smartphone, Monitor, RefreshCw } from 'lucide-react';
+import StatsCard from '../components/StatsCard';
+import { ShieldCheck, CheckCircle, XCircle, Search, Users, LogIn, LogOut, Clock3, Briefcase, AlertCircle, Camera, Smartphone, Monitor, RefreshCw, Building2, Phone, User as UserIcon } from 'lucide-react';
 
 const SecurityDashboard = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -271,266 +272,199 @@ const SecurityDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex items-center space-x-3 mb-6">
-            <ShieldCheck className="h-8 w-8 text-indigo-600"/>
-            <h1 className="text-3xl font-bold text-gray-900">Security Checkpoint</h1>
+      <main className="max-w-[480px] mx-auto px-4 pt-5 pb-24 space-y-5">
+        {/* ── Header ── */}
+        <div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-indigo-600" />
+            <h1 className="text-lg font-black text-gray-900">Security Checkpoint</h1>
           </div>
+          <p className="text-xs text-gray-400 mt-0.5 ml-7">Scan QR atau masukkan Pass ID pengunjung</p>
+        </div>
 
-          {/* ===== SECTION SCANNER QR ===== */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Bagian Scanner */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-                <Camera className="w-5 h-5 mr-2 text-indigo-600" />
-                Scan QR Code Pengunjung
-                <span className="ml-2 text-xs text-gray-400 flex items-center">
-                  <Monitor className="w-3 h-3 mr-1" /> PC
-                  <Smartphone className="w-3 h-3 ml-2 mr-1" /> HP
-                </span>
-              </h2>
-              
-              {/* Container Scanner */}
-              <div 
-                ref={scannerContainerRef}
-                id="reader" 
-                className="w-full bg-black rounded-lg overflow-hidden min-h-[300px] relative"
-              ></div>
-              
-              {/* Pesan Error Kamera */}
-              {cameraError && (
-                <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-red-700">{cameraError}</p>
-                      <button
-                        onClick={resetScanner}
-                        className="mt-2 inline-flex items-center text-xs text-red-600 hover:text-red-700 font-medium"
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Coba lagi akses kamera
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Panduan Izin Kamera */}
-              {cameraPermission === false && !cameraError && (
-                <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <p className="text-sm text-yellow-700">
-                    Akses kamera diperlukan untuk scan QR. Silakan izinkan akses kamera di pengaturan browser Anda.
-                  </p>
-                </div>
-              )}
-              
-              {/* Input Manual */}
-              <div className="mt-6 border-t pt-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Atau masukkan Pass ID secara manual:</h3>
-                <form onSubmit={handleManualSubmit} className="flex flex-col sm:flex-row gap-2">
-                  <input 
-                    type="text" 
-                    value={manualCode}
-                    onChange={(e) => setManualCode(e.target.value)}
-                    placeholder="Contoh: 123e4567-e89b-..." 
-                    className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    disabled={loading}
-                  />
-                  <button 
-                    type="submit" 
-                    disabled={!manualCode.trim() || loading} 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Search className="h-5 w-5 inline-block mr-1" />
-                    Verifikasi
-                  </button>
-                </form>
-              </div>
+        {/* ===== SCANNER QR ===== */}
+        <div className="space-y-3">
+          {/* Scanner Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+              <Camera className="w-4 h-4 text-indigo-500" />
+              <h2 className="text-sm font-bold text-gray-800">Scan QR Code</h2>
+              <span className="ml-auto text-[10px] text-gray-400 flex items-center gap-1">
+                <Monitor className="w-3 h-3" /> PC <Smartphone className="w-3 h-3 ml-1" /> HP
+              </span>
             </div>
 
-            {/* Bagian Status Hasil Scan */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col justify-center min-h-[400px]">
-              {loading && (
-                <div className="text-center py-10">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                  <p className="mt-4 text-indigo-600 font-medium">Memproses...</p>
-                </div>
-              )}
+            <div ref={scannerContainerRef} id="reader" className="w-full bg-black overflow-hidden min-h-[240px]" />
 
-              {!loading && !scanResult && !error && (
-                <div className="text-center py-10 bg-gray-50 rounded-lg flex-grow flex flex-col justify-center border-2 border-dashed border-gray-200">
-                  <ShieldCheck className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-gray-500 font-medium text-center">
-                    Arahkan QR Code ke kamera<br/>
-                    atau masukkan ID secara manual
-                  </p>
-                  <div className="mt-4 text-xs text-gray-400 flex items-center justify-center space-x-3">
-                    <span className="flex items-center"><Monitor className="w-3 h-3 mr-1" /> Laptop/PC</span>
-                    <span className="flex items-center"><Smartphone className="w-3 h-3 mr-1" /> Smartphone</span>
+            {cameraError && (
+              <div className="mx-4 mt-3 p-3 bg-red-50 rounded-xl border border-red-100 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-red-700">{cameraError}</p>
+                  <button onClick={resetScanner} className="mt-1.5 inline-flex items-center gap-1 text-xs text-red-600 font-semibold">
+                    <RefreshCw className="w-3 h-3" /> Coba lagi
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cameraPermission === false && !cameraError && (
+              <div className="mx-4 mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-100">
+                <p className="text-xs text-yellow-700">Izinkan akses kamera di browser untuk scan QR.</p>
+              </div>
+            )}
+
+            {/* Input Manual */}
+            <div className="px-4 pt-4 pb-4 border-t border-gray-100 mt-3">
+              <p className="text-xs font-semibold text-gray-400 mb-2">Masukkan Pass ID manual:</p>
+              <form onSubmit={handleManualSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  placeholder="Pass ID pengunjung..."
+                  className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={!manualCode.trim() || loading}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl disabled:opacity-50 hover:bg-indigo-700 flex-shrink-0 transition-all"
+                >
+                  <Search className="h-3.5 w-3.5" /> Cek
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Scan Result */}
+          {loading && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+              <p className="text-xs text-indigo-600 font-semibold">Memproses...</p>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="bg-red-50 rounded-2xl border border-red-100 p-4 flex items-start gap-3">
+              <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-red-800">Scan Gagal</p>
+                <p className="text-xs text-red-600 mt-1 break-all">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {!loading && scanResult && (
+            <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <p className="text-sm font-bold text-green-800">{scanResult.message}</p>
+              </div>
+              <div className="bg-white rounded-xl border border-green-100 p-3 space-y-2">
+                {[['Nama', scanResult.visit.full_name], ['Perusahaan', scanResult.visit.company], ['Bertemu', scanResult.visit.person_to_meet]].map(([k, v]) => (
+                  <div key={k} className="flex justify-between text-xs">
+                    <span className="text-gray-400">{k}</span>
+                    <span className="font-semibold text-gray-900">{v}</span>
                   </div>
+                ))}
+                <div className="flex justify-between items-center text-xs pt-1 border-t border-gray-100">
+                  <span className="text-gray-400">Status</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold ${scanResult.visit.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                    {scanResult.visit.status.replace('_', ' ')}
+                  </span>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+        </div>
 
-              {!loading && error && (
-                <div className="text-center py-8 bg-red-50 rounded-lg border border-red-200 flex-grow flex flex-col justify-center">
-                  <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-                  <h3 className="text-xl font-bold text-red-800">Scan Gagal</h3>
-                  <p className="text-red-600 mt-2 font-medium bg-white mx-4 py-2 rounded border border-red-100 break-all">{error}</p>
-                </div>
-              )}
+        {/* ===== DAFTAR PENGUNJUNG ===== */}
+        <div className="space-y-4">
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Pengunjung</p>
 
-              {!loading && scanResult && (
-                <div className="text-center py-6 bg-green-50 rounded-lg border border-green-200 flex-grow">
-                  <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-3" />
-                  <h3 className="text-xl font-bold text-green-800 mb-1">{scanResult.message}</h3>
-                  
-                  <div className="mt-6 bg-white p-5 rounded-lg border border-green-100 text-left shadow-sm">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Nama Pengunjung</p>
-                        <p className="font-semibold text-gray-900 border-b pb-2">{scanResult.visit.full_name}</p>
+          {/* Stats 2-col grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatsCard icon={Users}  value={counts.ALL}         label="Total Visit"  colorClass="bg-indigo-50"  iconColorClass="text-indigo-600" borderColor="border-indigo-100" />
+            <StatsCard icon={Clock3} value={counts.PENDING}     label="Terdaftar"    colorClass="bg-yellow-50" iconColorClass="text-yellow-600" borderColor="border-yellow-100" />
+            <StatsCard icon={LogIn}  value={counts.CHECKED_IN}  label="Checked In"   colorClass="bg-green-50"  iconColorClass="text-green-600"  borderColor="border-green-100" />
+            <StatsCard icon={LogOut} value={counts.CHECKED_OUT} label="Checked Out"  colorClass="bg-gray-50"   iconColorClass="text-gray-500"   borderColor="border-gray-200" />
+          </div>
+
+          {/* Tab filter – scrollable, no overflow */}
+          <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 overflow-x-auto no-scrollbar">
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const isTabActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
+                    isTabActive ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isTabActive ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-500'
+                  }`}>{counts[tab.key]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Visitor list */}
+          {visitsLoading ? (
+            <div className="bg-white rounded-2xl p-10 flex flex-col items-center gap-3 shadow-sm border border-gray-100">
+              <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+              <p className="text-xs text-gray-400 font-medium">Memuat data pengunjung...</p>
+            </div>
+          ) : filteredVisits.length === 0 ? (
+            <div className="bg-white rounded-2xl p-10 flex flex-col items-center gap-3 shadow-sm border border-gray-100">
+              <Users className="h-10 w-10 text-gray-200" />
+              <p className="text-sm text-gray-400 font-medium">Belum ada pengunjung dengan status ini.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredVisits.map((visit) => {
+                const statusCfg = {
+                  PENDING:     { bar: 'bg-yellow-50 border-yellow-100 text-yellow-700', Icon: Clock3,  label: 'Terdaftar' },
+                  CHECKED_IN:  { bar: 'bg-green-50 border-green-100 text-green-700',   Icon: LogIn,   label: 'Check In' },
+                  CHECKED_OUT: { bar: 'bg-gray-50 border-gray-100 text-gray-500',     Icon: LogOut,  label: 'Check Out' },
+                }[visit.status] || { bar: 'bg-gray-50 border-gray-100 text-gray-500', Icon: Clock3, label: visit.status };
+                const { Icon: SIcon } = statusCfg;
+                return (
+                  <div key={visit.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className={`flex items-center justify-between px-4 py-2 border-b ${statusCfg.bar}`}>
+                      <div className={`flex items-center gap-1.5 text-xs font-semibold ${statusCfg.text}`}>
+                        <SIcon className="w-3 h-3" />{statusCfg.label}
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Perusahaan</p>
-                        <p className="font-semibold text-gray-900 border-b pb-2">{scanResult.visit.company}</p>
+                      <span className="text-[11px] text-gray-400">
+                        {new Date(visit.visit_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="px-4 pt-3 pb-3">
+                      <p className="text-[15px] font-bold text-gray-900 truncate mb-1">{visit.full_name}</p>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                        <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                        <span className="truncate">{visit.company}</span>
                       </div>
-                      <div className="col-span-2">
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Bertemu Dengan</p>
-                        <p className="font-semibold text-gray-900 border-b pb-2">{scanResult.visit.person_to_meet}</p>
-                      </div>
-                      <div className="col-span-2 flex items-center justify-between pt-2">
-                        <p className="text-sm font-medium text-gray-700">Status Akses</p>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold shadow-sm ${scanResult.visit.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
-                          {scanResult.visit.status.replace('_', ' ')}
+                      <div className="flex flex-col gap-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1.5"><UserIcon className="w-3 h-3 text-gray-400" />{visit.person_to_meet}</span>
+                        {visit.phone && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-400" />{visit.phone}</span>}
+                        <span className="flex items-center gap-1.5">
+                          {visit.WorkPermit
+                            ? <><Briefcase className="w-3 h-3 text-blue-500" /><span className="text-blue-600 font-medium">Work Permit Ada</span></>
+                            : <><AlertCircle className="w-3 h-3 text-red-400" /><span className="text-red-500 font-medium">Tidak Ada Work Permit</span></>}
                         </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ===== DAFTAR PENGUNJUNG ===== */}
-          <div className="mt-4">
-            <div className="flex items-center space-x-3 mb-5">
-              <Users className="h-7 w-7 text-indigo-600" />
-              <h2 className="text-2xl font-bold text-gray-900">Daftar Pengunjung</h2>
-            </div>
-
-            {/* Kartu Statistik - Responsif */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center space-x-3">
-                <div className="p-2.5 bg-indigo-100 rounded-lg">
-                  <Users className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{counts.ALL}</p>
-                  <p className="text-xs text-gray-500 font-medium">Total Visit</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-yellow-200 p-4 flex items-center space-x-3">
-                <div className="p-2.5 bg-yellow-100 rounded-lg">
-                  <Clock3 className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{counts.PENDING}</p>
-                  <p className="text-xs text-gray-500 font-medium">Terdaftar</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-green-200 p-4 flex items-center space-x-3">
-                <div className="p-2.5 bg-green-100 rounded-lg">
-                  <LogIn className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{counts.CHECKED_IN}</p>
-                  <p className="text-xs text-gray-500 font-medium">Checked In</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-300 p-4 flex items-center space-x-3">
-                <div className="p-2.5 bg-gray-100 rounded-lg">
-                  <LogOut className="h-6 w-6 text-gray-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{counts.CHECKED_OUT}</p>
-                  <p className="text-xs text-gray-500 font-medium">Checked Out</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Tab Filter - Responsif untuk HP */}
-            <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 mb-5">
-              {tabs.map(tab => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-white text-indigo-700 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-1.5" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    <span className="sm:hidden">{tab.label === 'Semua' ? 'All' : tab.label.charAt(0)}</span>
-                    <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
-                      {counts[tab.key]}
-                    </span>
-                  </button>
                 );
               })}
             </div>
-
-            {/* Tabel Pengunjung - Responsif */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-              {visitsLoading ? (
-                <div className="text-center py-10">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
-                  <p className="mt-3 text-sm text-gray-500">Memuat data pengunjung...</p>
-                </div>
-              ) : filteredVisits.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="mx-auto h-12 w-12 text-gray-300" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada data</h3>
-                  <p className="mt-1 text-sm text-gray-500">Belum ada pengunjung dengan status ini.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Perusahaan</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Bertemu</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Work Permit</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
-                      {filteredVisits.map((visit) => (
-                        <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="text-sm font-medium text-gray-900">{visit.full_name}</div>
-                            <div className="text-xs text-gray-400 sm:hidden">{visit.company}</div>
-                            <div className="text-xs text-gray-400">{visit.phone}</div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">{visit.company}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">{visit.person_to_meet}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">{getStatusBadge(visit.status)}</td>
-                          <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">{getPermitBadge(visit)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </main>
     </div>
