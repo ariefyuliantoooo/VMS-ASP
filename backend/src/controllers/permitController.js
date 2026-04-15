@@ -3,6 +3,11 @@ const { WorkPermit, Visit, User } = require('../models');
 // Create Work Permit
 exports.createPermit = async (req, res) => {
   try {
+    const { role } = req.user;
+    if (role !== 'STAFF' && role !== 'ADMIN') {
+        return res.status(403).json({ message: 'Only staff or admin can create work permits.' });
+    }
+
     const { visitor_id, worker_name, company, job_type, work_location, start_date, end_date, pic_company } = req.body;
     
     let permit_file = null;
@@ -44,15 +49,17 @@ exports.getAllPermits = async (req, res) => {
     const userRole = req.user.role;
     const userId = req.user.id;
 
-    let visitWhereClause = {};
     if (userRole === 'USER') {
-      visitWhereClause.user_id = userId;
+        return res.status(403).json({ message: 'Access denied. Visitors cannot view work permits.' });
     }
+
+    let visitWhereClause = {};
+    // If not admin/security, maybe we want to filter for the staff member?
+    // For now, let STAFF see all since they manage internal logistics.
 
     const permits = await WorkPermit.findAll({
       include: [{ 
         model: Visit, 
-        where: Object.keys(visitWhereClause).length > 0 ? visitWhereClause : undefined,
         attributes: ['full_name', 'visit_purpose', 'visit_date', 'status'],
         include: [{ model: User, attributes: ['username']}]
       }],

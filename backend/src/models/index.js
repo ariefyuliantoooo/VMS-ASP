@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 const User = require('./User');
 const Visit = require('./Visit');
 const WorkPermit = require('./WorkPermit');
+const AuthLog = require('./AuthLog');
 
 // Define associations
 User.hasMany(Visit, { foreignKey: 'user_id', onDelete: 'CASCADE' });
@@ -15,5 +16,6 @@ module.exports = {
   sequelize,
   User,
   Visit,
-  WorkPermit
+  WorkPermit,
+  AuthLog
 };

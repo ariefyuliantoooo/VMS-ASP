@@ -39,8 +39,12 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     defaultValue: 'USER',
     validate: {
-      isIn: [['USER', 'SECURITY', 'ADMIN']]
+      isIn: [['USER', 'STAFF', 'SECURITY', 'ADMIN']]
     }
+  },
+  is_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   }
 }, {
   tableName: 'users',

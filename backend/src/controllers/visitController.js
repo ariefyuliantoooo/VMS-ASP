@@ -1,6 +1,7 @@
-const { Visit, User, WorkPermit } = require('../models');
+const { Visit, User, WorkPermit, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const QRCode = require('qrcode');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 // Create a new visit
 exports.createVisit = async (req, res) => {
@@ -9,7 +10,7 @@ exports.createVisit = async (req, res) => {
     const user_id = req.user.id; // From auth middleware
 
     // Generate unique ID for QR Code
-    const uniqueId = uuidv4();
+    const uniqueId = crypto.randomUUID();
     
     // Create QR Code image data URI
     const qrCodeDataUri = await QRCode.toDataURL(uniqueId);
@@ -56,9 +57,23 @@ exports.getAllVisits = async (req, res) => {
 // Get visits for logged-in user
 exports.getUserVisits = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const { id, role, full_name } = req.user;
+    
+    let whereClause = { user_id: id };
+    
+    // If Staff, only show visits where they are the person to meet 
+    // to search for the one they want to link a permit to.
+    if (role === 'STAFF') {
+        whereClause = { 
+            person_to_meet: { [Op.iLike]: `%${full_name}%` }
+        };
+    } else if (role === 'SECURITY' || role === 'ADMIN') {
+        // Security and Admin see all
+        whereClause = {};
+    }
+
     const visits = await Visit.findAll({
-      where: { user_id },
+      where: whereClause,
       order: [['created_at', 'DESC']]
     });
     res.json(visits);
