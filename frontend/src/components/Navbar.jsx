@@ -26,9 +26,9 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { name: 'Dashboard',       path: '/',           roles: ['USER'] },
+    { name: 'Dashboard',       path: '/',           roles: ['USER', 'STAFF'] },
     { name: 'Kunjungan Baru',  path: '/visit/new',  roles: ['USER'] },
-    { name: 'Work Permits',    path: '/permits',    roles: ['USER'] },
+    { name: 'Work Permits',    path: '/permits',    roles: ['STAFF', 'ADMIN'] },
     { name: 'Security Panel',  path: '/security',   roles: ['SECURITY', 'ADMIN'] },
     { name: 'Admin Dashboard', path: '/admin',      roles: ['ADMIN'] },
   ];

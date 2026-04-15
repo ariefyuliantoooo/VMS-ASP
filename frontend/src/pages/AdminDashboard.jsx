@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import StatsCard from '../components/StatsCard';
 import VisitorCard from '../components/VisitorCard';
 import { AuthContext } from '../context/AuthContext';
-import { ShieldAlert, Users, Clock3, LogIn, LogOut } from 'lucide-react';
+import { ShieldAlert, Users, Clock3, LogIn, LogOut, Copy, Check, Link as LinkIcon } from 'lucide-react';
 
 const AdminDashboard = () => {
     const { user } = useContext(AuthContext);
@@ -13,6 +13,8 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError]     = useState('');
     const [deletingId, setDeletingId] = useState(null);
+    const [inviteLink, setInviteLink] = useState('');
+    const [copied, setCopied] = useState(false);
 
     const fetchVisits = async () => {
         try {
@@ -40,6 +42,23 @@ const AdminDashboard = () => {
         } finally {
             setDeletingId(null);
         }
+    };
+
+    const handleGenerateInvite = async () => {
+        try {
+            const res = await api.post('/invite-staff');
+            const url = `${window.location.origin}/register?token=${res.data.inviteToken}`;
+            setInviteLink(url);
+            setCopied(false);
+        } catch {
+            alert('Gagal generate invite link');
+        }
+    };
+    
+    const handleCopy = () => {
+        navigator.clipboard.writeText(inviteLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
@@ -80,6 +99,34 @@ const AdminDashboard = () => {
                     <StatsCard icon={Clock3} value={counts.pending}   label="Terdaftar"  colorClass="bg-yellow-50" iconColorClass="text-yellow-600" borderColor="border-yellow-100" />
                     <StatsCard icon={LogIn}  value={counts.checkedIn} label="Check In"   colorClass="bg-green-50"  iconColorClass="text-green-600"  borderColor="border-green-100" />
                     <StatsCard icon={LogOut} value={counts.checkedOut}label="Check Out"  colorClass="bg-gray-50"   iconColorClass="text-gray-500"   borderColor="border-gray-200" />
+                </div>
+
+                {/* ── Generate Invite ── */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                        <LinkIcon className="h-4 w-4 text-indigo-500" />
+                        <h2 className="text-sm font-bold text-gray-900">Tambahkan Staff Baru</h2>
+                    </div>
+                    <button 
+                        onClick={handleGenerateInvite}
+                        className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors"
+                    >
+                        Generate Invite Link
+                    </button>
+                    
+                    {inviteLink && (
+                        <div className="mt-3 flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                            <input 
+                                type="text"
+                                value={inviteLink}
+                                readOnly
+                                className="bg-transparent text-xs text-gray-600 flex-1 outline-none min-w-0"
+                            />
+                            <button onClick={handleCopy} className="p-1.5 text-gray-400 hover:text-gray-700 transition flex-shrink-0">
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── Section header ── */}

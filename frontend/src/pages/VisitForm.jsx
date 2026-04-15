@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -12,9 +12,31 @@ const VisitForm = () => {
         person_to_meet: '',
         visit_date: ''
     });
+    const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [fetchingStaff, setFetchingStaff] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchStaff = async () => {
+            try {
+                const res = await api.get('/users/staff');
+                setStaffList(res.data);
+                
+                // Set the default person_to_meet to the first staff member if available
+                if (res.data && res.data.length > 0) {
+                    setFormData(prev => ({ ...prev, person_to_meet: res.data[0].full_name }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch staff list", err);
+                setError("Failed to load staff. Please try again later.");
+            } finally {
+                setFetchingStaff(false);
+            }
+        };
+        fetchStaff();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,7 +48,6 @@ const VisitForm = () => {
         setError('');
         try {
             const res = await api.post('/visit', formData);
-            // Assuming the backend returns the created visit in res.data.visit
             navigate(`/visit/${res.data.visit.id}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to submit visit request');
@@ -82,7 +103,19 @@ const VisitForm = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Person to Meet</label>
-                                    <input type="text" name="person_to_meet" required value={formData.person_to_meet} onChange={handleChange} className="input-field mt-1" />
+                                    <select 
+                                        name="person_to_meet" 
+                                        required 
+                                        value={formData.person_to_meet} 
+                                        onChange={handleChange} 
+                                        className="input-field mt-1"
+                                        disabled={fetchingStaff}
+                                    >
+                                        <option value="" disabled>{fetchingStaff ? 'Loading staff...' : 'Select a person to meet...'}</option>
+                                        {staffList.map(s => (
+                                            <option key={s.id} value={s.full_name}>{s.full_name}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>

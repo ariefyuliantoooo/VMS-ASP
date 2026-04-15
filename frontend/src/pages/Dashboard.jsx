@@ -44,10 +44,14 @@ const Dashboard = () => {
             <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 <div className="px-4 py-6 sm:px-0">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold text-gray-900">My Visits</h1>
-                        <Link to="/visit/new" className="btn-primary">
-                            Register New Visit
-                        </Link>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            {user?.role === 'STAFF' ? 'Visitors Meeting Me' : 'My Visits'}
+                        </h1>
+                        {user?.role !== 'STAFF' && (
+                            <Link to="/visit/new" className="btn-primary">
+                                Register New Visit
+                            </Link>
+                        )}
                     </div>
 
                     {loading ? (
@@ -56,12 +60,18 @@ const Dashboard = () => {
                         <div className="bg-white overflow-hidden shadow rounded-lg text-center py-12">
                             <Calendar className="mx-auto h-12 w-12 text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No visits</h3>
-                            <p className="mt-1 text-sm text-gray-500">Get started by creating a new visit request.</p>
-                            <div className="mt-6">
-                                <Link to="/visit/new" className="btn-primary">
-                                    Register New Visit
-                                </Link>
-                            </div>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {user?.role === 'STAFF' 
+                                    ? 'No visitors have scheduled a meeting with you yet.' 
+                                    : 'Get started by creating a new visit request.'}
+                            </p>
+                            {user?.role !== 'STAFF' && (
+                                <div className="mt-6">
+                                    <Link to="/visit/new" className="btn-primary">
+                                        Register New Visit
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="bg-white shadow overflow-hidden sm:rounded-md">

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, MailCheck } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +15,12 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const inviteToken = queryParams.get('token');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,12 +30,25 @@ const Register = () => {
     e.preventDefault();
     setError('');
     try {
-      await register(formData);
-      navigate('/login');
+      await register({ ...formData, inviteToken });
+      setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register');
     }
   };
+
+  if (success) {
+      return (
+         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md bg-white p-8 rounded-lg shadow text-center">
+                <div className="text-green-500 mb-4 flex justify-center"><MailCheck className="h-16 w-16" /></div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
+                <p className="text-gray-600 mb-6">Silakan periksa kotak masuk email Anda (termasuk folder Spam) untuk memverifikasi akun ini sebelum dapat digunakan untuk login.</p>
+                <Link to="/login" className="text-green-600 font-medium hover:text-green-500">Kembali ke Halaman Login</Link>
+            </div>
+         </div>
+      );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -58,6 +75,12 @@ const Register = () => {
             {error && (
                 <div className="p-3 bg-red-100 text-red-700 border border-red-200 rounded text-sm">
                     {error}
+                </div>
+            )}
+            
+            {inviteToken && (
+                <div className="p-3 bg-blue-100 text-blue-800 border border-blue-200 rounded text-sm text-center font-medium">
+                    Staff Invitation Token Detected. You will be registered as Staff.
                 </div>
             )}
             
@@ -100,12 +123,8 @@ const Register = () => {
 
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Account Type</label>
-                  <select name="role" value={formData.role} onChange={handleChange} className="input-field mt-1">
-                      <option value="USER">Visitor User</option>
-                      <option value="SECURITY">Security Guard</option>
-                      <option value="ADMIN">Administrator</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700">Company</label>
+                  <input name="company" type="text" value={formData.company} onChange={handleChange} className="input-field mt-1" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Phone</label>
