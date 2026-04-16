@@ -180,3 +180,79 @@ exports.verifyEmail = async (req, res) => {
     res.status(400).json({ message: 'Token invalid atau expired' });
   }
 };
+
+// Admin: Get all users
+exports.getAllUsers = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
+    const users = await User.findAll({ order: [['created_at', 'DESC']], attributes: { exclude: ['password'] } });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+};
+
+// Admin: Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    await user.destroy();
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting user' });
+  }
+};
+
+// Admin: Get Auth Logs
+exports.getAuthLogs = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
+    const logs = await AuthLog.findAll({ order: [['created_at', 'DESC']], limit: 100 });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching logs' });
+  }
+};
+// Admin: Create a new user manually
+exports.createUser = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
+    
+    const { username, email, password, full_name, role, company, phone } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const newUser = await User.create({
+      username,
+      email,
+      password,
+      full_name,
+      role,
+      company,
+      phone,
+      is_verified: true // Admins create verified users directly
+    });
+
+    await AuthLog.create({ 
+        action: 'ADMIN_CREATE_USER', 
+        email: req.user.email, 
+        ip_address: req.ip, 
+        status: 'success', 
+        details: `Created user ${email} with role ${role}` 
+    });
+
+    res.status(201).json({ 
+      message: 'User created successfully',
+      user: { id: newUser.id, username, email, full_name, role }
+    });
+  } catch (error) {
+    console.error('Admin Create User error:', error);
+    res.status(500).json({ message: 'Error creating user', error: error.message });
+  }
+};

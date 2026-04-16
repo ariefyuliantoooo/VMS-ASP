@@ -26,14 +26,21 @@ router.get('/health', (req, res) => {
 router.post('/register', registerLimiter, authController.register);
 router.post('/login', authController.login);
 router.get('/verify-email', authController.verifyEmail);
-router.get('/users/staff', authMiddleware, authController.getStaffList);
+router.get('/users/staff', authController.getStaffList);
 router.post('/invite-staff', authMiddleware, authController.generateInvite);
+router.get('/users', authMiddleware, authController.getAllUsers);
+router.post('/users/create', authMiddleware, authController.createUser);
+router.delete('/users/:id', authMiddleware, authController.deleteUser);
+router.get('/auth/logs', authMiddleware, authController.getAuthLogs);
 
 // Visit Routes
 router.post('/visit', authMiddleware, visitController.createVisit);
+router.post('/visit/public', visitController.createPublicVisit); // Public Guest Registration
 router.get('/visits', authMiddleware, visitController.getAllVisits); // Typically for admin/security. Should have role check in real app.
 router.get('/visits/me', authMiddleware, visitController.getUserVisits);
 router.get('/visit/:id', authMiddleware, visitController.getVisitById);
+router.get('/visit/qr/:code', authMiddleware, visitController.getVisitByQR);
+router.patch('/visit/:id/status', authMiddleware, visitController.updateVisitStatus); // Approve/Reject
 router.post('/visit/scan', authMiddleware, visitController.scanVisit); // Security scan QR
 router.delete('/visit/:id', authMiddleware, visitController.deleteVisit); // Admin delete visit
 

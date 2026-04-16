@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Download, ArrowLeft } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { Download, ArrowLeft, Check, X } from 'lucide-react';
 
 const VisitDetail = () => {
     const { id } = useParams();
     const [visitData, setVisitData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const { user } = React.useContext(AuthContext);
 
     useEffect(() => {
         const fetchVisit = async () => {
@@ -61,7 +63,7 @@ const VisitDetail = () => {
                                 Present this QR code to security upon arrival.
                             </p>
                         </div>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${visit.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : visit.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${visit.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : visit.status === 'APPROVED' ? 'bg-blue-100 text-blue-800' : visit.status === 'REJECTED' ? 'bg-red-100 text-red-800' : visit.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                             {visit.status.replace('_', ' ')}
                         </span>
                     </div>

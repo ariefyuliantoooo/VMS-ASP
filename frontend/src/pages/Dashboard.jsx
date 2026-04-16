@@ -28,10 +28,15 @@ const Dashboard = () => {
         switch (status) {
             case 'PENDING':
                 return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock3 className="w-3 h-3 mr-1"/> Pending</span>;
+            case 'APPROVED':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">✅ Approved</span>;
+            case 'REJECTED':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">❌ Rejected</span>;
             case 'CHECKED_IN':
                 return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/> Checked In</span>;
             case 'CHECKED_OUT':
-                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Checked Out</span>;
+            case 'DONE':
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Done</span>;
             default:
                 return null;
         }
@@ -45,11 +50,11 @@ const Dashboard = () => {
                 <div className="px-4 py-6 sm:px-0">
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold text-gray-900">
-                            {user?.role === 'STAFF' ? 'Visitors Meeting Me' : 'My Visits'}
+                            {user?.role === 'STAFF' ? 'Tamu Saya' : 'Kunjungan Saya'}
                         </h1>
                         {user?.role !== 'STAFF' && (
                             <Link to="/visit/new" className="btn-primary">
-                                Register New Visit
+                                Buat Reservasi Kunjungan
                             </Link>
                         )}
                     </div>

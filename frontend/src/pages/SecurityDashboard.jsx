@@ -7,6 +7,7 @@ import { ShieldCheck, CheckCircle, XCircle, Search, Users, LogIn, LogOut, Clock3
 
 const SecurityDashboard = () => {
   const [scanResult, setScanResult] = useState(null);
+  const [scanInfo, setScanInfo] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [manualCode, setManualCode] = useState('');
@@ -177,17 +178,31 @@ const SecurityDashboard = () => {
     
     setLoading(true);
     setScanResult(null);
+    setScanInfo(null);
     setError('');
 
     try {
-      const res = await api.post('/visit/scan', { qr_code: qrCodeText.trim() });
-      setScanResult(res.data);
+      const res = await api.get(`/visit/qr/${encodeURIComponent(qrCodeText.trim())}`);
+      setScanInfo(res.data.visit);
       setManualCode('');
-      fetchVisits(); // Refresh daftar visit setelah scan
     } catch (err) {
       setError(err.response?.data?.message || 'Error memproses QR Code. Tidak valid atau sudah kadaluarsa.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (status) => {
+    setLoading(true);
+    try {
+        const res = await api.patch(`/visit/${scanInfo.id}/status`, { status });
+        setScanResult({ message: `Visit marked as ${status}`, visit: res.data.visit });
+        setScanInfo(null);
+        fetchVisits();
+    } catch (err) {
+        setError(err.response?.data?.message || 'Error updating status');
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -355,22 +370,60 @@ const SecurityDashboard = () => {
             </div>
           )}
 
-          {!loading && scanResult && (
+          {/* Modul Validasi (Scan Info) */}
+          {!loading && scanInfo && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5">
+                  <div className="flex items-center gap-2 mb-4 border-b pb-3">
+                      <UserIcon className="h-5 w-5 text-indigo-600" />
+                      <h3 className="text-md font-black text-gray-900">Validasi Pengunjung</h3>
+                      <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${scanInfo.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : scanInfo.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                          {scanInfo.status}
+                      </span>
+                  </div>
+
+                  <div className="space-y-2 mb-5">
+                      {[['Nama', scanInfo.full_name], ['Perusahaan', scanInfo.company], ['Tujuan Bertemu', scanInfo.person_to_meet], ['Keperluan', scanInfo.visit_purpose]].map(([k, v]) => (
+                          <div key={k} className="flex flex-col text-sm border-b border-gray-50 pb-1">
+                              <span className="text-gray-400 text-xs">{k}</span>
+                              <span className="font-bold text-gray-900">{v}</span>
+                          </div>
+                      ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                       {scanInfo.status === 'PENDING' ? (
+                           <>
+                               <button onClick={() => handleUpdateStatus('CHECKED_IN')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-sm flex justify-center items-center gap-1.5 transition-colors shadow-sm">
+                                   <LogIn className="w-4 h-4" /> Approve & Masuk
+                               </button>
+                               <button onClick={() => handleUpdateStatus('REJECTED')} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2.5 rounded-xl text-sm flex justify-center items-center gap-1.5 transition-colors">
+                                   <XCircle className="w-4 h-4" /> Reject (Tolak)
+                               </button>
+                           </>
+                       ) : scanInfo.status === 'CHECKED_IN' ? (
+                           <button onClick={() => handleUpdateStatus('DONE')} className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2.5 rounded-xl text-sm flex justify-center items-center gap-1.5 transition-colors shadow-sm">
+                               <LogOut className="w-4 h-4" /> Check-Out (Selesai)
+                           </button>
+                       ) : (
+                           <div className="w-full bg-gray-100 text-center text-gray-500 font-bold py-2.5 rounded-xl text-sm">
+                               Kunjungan ini sudah selesai.
+                           </div>
+                       )}
+                  </div>
+              </div>
+          )}
+
+          {!loading && scanResult && !scanInfo && (
             <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
-                <p className="text-sm font-bold text-green-800">{scanResult.message}</p>
+                <p className="text-sm font-bold text-green-800">Aksi Sukses</p>
               </div>
               <div className="bg-white rounded-xl border border-green-100 p-3 space-y-2">
-                {[['Nama', scanResult.visit.full_name], ['Perusahaan', scanResult.visit.company], ['Bertemu', scanResult.visit.person_to_meet]].map(([k, v]) => (
-                  <div key={k} className="flex justify-between text-xs">
-                    <span className="text-gray-400">{k}</span>
-                    <span className="font-semibold text-gray-900">{v}</span>
-                  </div>
-                ))}
+                <p className="text-xs font-semibold">{scanResult.message}</p>
                 <div className="flex justify-between items-center text-xs pt-1 border-t border-gray-100">
-                  <span className="text-gray-400">Status</span>
-                  <span className={`px-2 py-0.5 rounded-full font-bold ${scanResult.visit.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                  <span className="text-gray-400">Status Saat Ini</span>
+                  <span className="px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-800">
                     {scanResult.visit.status.replace('_', ' ')}
                   </span>
                 </div>

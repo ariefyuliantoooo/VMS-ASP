@@ -13,6 +13,7 @@ import SecurityDashboard from './pages/SecurityDashboard';
 import PermitForm from './pages/PermitForm';
 import PermitList from './pages/PermitList';
 import AdminDashboard from './pages/AdminDashboard';
+import GuestVisit from './pages/GuestVisit';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -24,12 +25,24 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Role Protected Route Component
+const RoleProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, loading } = useContext(AuthContext);
+  
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
+  
+  return children;
+};
+
 const AppRoutes = () => {
     return (
         <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register-visit" element={<GuestVisit />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             
             {/* Protected Routes */}
@@ -37,11 +50,11 @@ const AppRoutes = () => {
             <Route path="/visit/new" element={<ProtectedRoute><VisitForm /></ProtectedRoute>} />
             <Route path="/visit/:id" element={<ProtectedRoute><VisitDetail /></ProtectedRoute>} />
             
-            <Route path="/security" element={<ProtectedRoute><SecurityDashboard /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/security" element={<RoleProtectedRoute allowedRoles={['SECURITY', 'ADMIN']}><SecurityDashboard /></RoleProtectedRoute>} />
+            <Route path="/admin" element={<RoleProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></RoleProtectedRoute>} />
             
-            <Route path="/permits" element={<ProtectedRoute><PermitList /></ProtectedRoute>} />
-            <Route path="/permit/new" element={<ProtectedRoute><PermitForm /></ProtectedRoute>} />
+            <Route path="/permits" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'SECURITY']}><PermitList /></RoleProtectedRoute>} />
+            <Route path="/permit/new" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN']}><PermitForm /></RoleProtectedRoute>} />
             
             {/* Catch All */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,7 +9,7 @@ const Visit = sequelize.define('Visit', {
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'users',
       key: 'id'
@@ -44,11 +44,11 @@ const Visit = sequelize.define('Visit', {
     allowNull: false,
     unique: true,
   },
-  status: {
+    status: {
     type: DataTypes.STRING,
     defaultValue: 'PENDING',
     validate: {
-      isIn: [['PENDING', 'CHECKED_IN', 'CHECKED_OUT']]
+      isIn: [['PENDING', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'DONE']]
     }
   }
 }, {

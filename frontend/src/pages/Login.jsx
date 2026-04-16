@@ -18,8 +18,15 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/');
+      const { user } = await login(email, password);
+      
+      if (user.role === 'ADMIN') {
+          navigate('/admin');
+      } else if (user.role === 'SECURITY') {
+          navigate('/security');
+      } else {
+          navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login');
     } finally {
