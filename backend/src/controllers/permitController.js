@@ -12,7 +12,11 @@ exports.createPermit = async (req, res) => {
     
     let permit_file = null;
     if (req.file) {
-      permit_file = req.file.path.split('public')[1].replace(/\\/g, '/'); // Get relative web path
+      if (process.env.NODE_ENV === 'production') {
+        permit_file = `/tmp/uploads/${req.file.filename}`;
+      } else {
+        permit_file = req.file.path.split('public')[1].replace(/\\/g, '/'); // Get relative web path
+      }
     }
 
     // Verify visit exists
