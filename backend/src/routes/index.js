@@ -11,15 +11,63 @@ const rateLimit = require('express-rate-limit');
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 create account requests per `window` (here, per 15 minutes)
+  max: 10, // Limit each IP to 10 requests
   message: { message: 'Too many registration attempts from this IP, please try again after 15 minutes' },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Allow more for testing
+  message: { message: 'Too many password reset requests from this IP, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Health Check Route
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'VMS API is running' });
+});
+
+router.get('/migrate-db', async (req, res) => {
+  try {
+    const { sequelize } = require('../models');
+    await sequelize.sync({ alter: true });
+    res.json({ message: 'Database synced successfully with alter: true' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error syncing database', error: error.message });
+  }
+});
+
+router.get('/test-email', async (req, res) => {
+  try {
+    const mailer = require('../utils/mailer');
+    // Return redacted env info for debugging
+    const user = process.env.EMAIL_USER || '';
+    const envDebug = {
+      EMAIL_USER_PATTERN: user ? `${user[0]}...${user.slice(-8)}` : 'MISSING',
+      HAS_PASS: !!process.env.EMAIL_PASS,
+      PASS_LEN: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0,
+      NODE_ENV: process.env.NODE_ENV
+    };
+    
+    const info = await mailer.sendVerificationEmail('arief.yuliantoooo@gmail.com', 'TEST_TOKEN_123');
+    res.json({ message: 'Test email success!', info, envDebug });
+  } catch (error) {
+    res.status(200).json({ 
+      message: 'Test email failed', 
+      error: error.message, 
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      envDebug: {
+        EMAIL_USER_PATTERN: (process.env.EMAIL_USER || '') ? `${(process.env.EMAIL_USER || '')[0]}...${(process.env.EMAIL_USER || '').slice(-8)}` : 'MISSING',
+        HAS_PASS: !!process.env.EMAIL_PASS,
+        PASS_LEN: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+      }
+    });
+  }
 });
 
 // Auth Routes
@@ -32,6 +80,9 @@ router.get('/users', authMiddleware, authController.getAllUsers);
 router.post('/users/create', authMiddleware, authController.createUser);
 router.delete('/users/:id', authMiddleware, authController.deleteUser);
 router.get('/auth/logs', authMiddleware, authController.getAuthLogs);
+router.post('/auth/forgot-password', resetLimiter, authController.forgotPassword);
+router.post('/auth/verify-reset-otp', authController.verifyResetOTP);
+router.post('/auth/reset-password', authController.resetPassword);
 
 // Visit Routes
 router.post('/visit', authMiddleware, visitController.createVisit);
