@@ -52,8 +52,9 @@ router.get('/test-email', async (req, res) => {
       NODE_ENV: process.env.NODE_ENV
     };
     
-    const info = await mailer.sendDirectPasswordEmail('arief.yuliantoooo@gmail.com', 'TEST_PASSWORD_123');
-    res.json({ message: 'Test email success!', info, envDebug });
+    const targetEmail = req.query.email || 'arief.yuliantoooo@gmail.com';
+    const info = await mailer.sendDirectPasswordEmail(targetEmail, 'TEST_PASSWORD_123');
+    res.json({ message: 'Test email success!', targetEmail, info, envDebug });
   } catch (error) {
     res.status(200).json({ 
       message: 'Test email failed', 
