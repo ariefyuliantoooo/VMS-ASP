@@ -45,10 +45,6 @@ exports.register = async (req, res) => {
       generatedPassword += charset.charAt(Math.floor(Math.random() * charset.length));
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 15);
-
     const newUser = await User.create({
       username,
       email,
@@ -57,9 +53,7 @@ exports.register = async (req, res) => {
       company,
       phone,
       role: assignedRole,
-      is_verified: true, // Account is active immediately
-      reset_password_otp: otp,
-      reset_password_expires: expires
+      is_verified: true // Account is active immediately
     });
 
     // Send welcome email with the generated password (no verification link needed)
@@ -307,8 +301,6 @@ exports.forgotPassword = async (req, res) => {
 
     // Save directly to user
     user.password = newGeneratedPassword;
-    user.reset_password_otp = null;
-    user.reset_password_expires = null;
     await user.save();
 
     // Send email
@@ -320,72 +312,4 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({ message: 'Terjadi kesalahan sistem' });
   }
 };
-
-
-// Verify Reset OTP
-exports.verifyResetOTP = async (req, res) => {
-  try {
-    const { email, otp } = req.body;
-    const user = await User.findOne({ where: { email } });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
-    }
-
-    if (user.reset_password_otp !== otp) {
-      return res.status(400).json({ message: 'Kode OTP salah' });
-    }
-
-    if (new Date() > new Date(user.reset_password_expires)) {
-      return res.status(400).json({ message: 'Kode OTP sudah kadaluarsa' });
-    }
-
-    res.json({ message: 'OTP valid', valid: true });
-  } catch (error) {
-    console.error('Verify OTP error:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan sistem' });
-  }
-};
-
-// Reset Password - Now confirm via token and generate a permanent password
-exports.resetPassword = async (req, res) => {
-  try {
-    const { email, token } = req.body;
-    const user = await User.findOne({ where: { email } });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
-    }
-
-    if (!user.reset_password_otp || user.reset_password_otp !== token) {
-      return res.status(400).json({ message: 'Token reset password tidak valid' });
-    }
-
-    if (new Date() > new Date(user.reset_password_expires)) {
-      return res.status(400).json({ message: 'Token reset password sudah kadaluarsa' });
-    }
-
-    // Generate random 8-char alphanumeric password
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let newGeneratedPassword = '';
-    for (let i = 0; i < 8; i++) {
-      newGeneratedPassword += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-
-    // Update password (hashing is handled by Sequelize hook in User model)
-    user.password = newGeneratedPassword;
-    user.reset_password_otp = null;
-    user.reset_password_expires = null;
-    await user.save();
-
-    res.json({ 
-      message: 'Password berhasil direset.', 
-      newPassword: newGeneratedPassword 
-    });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan sistem' });
-  }
-};
-
 

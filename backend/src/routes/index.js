@@ -81,8 +81,6 @@ router.post('/users/create', authMiddleware, authController.createUser);
 router.delete('/users/:id', authMiddleware, authController.deleteUser);
 router.get('/auth/logs', authMiddleware, authController.getAuthLogs);
 router.post('/auth/forgot-password', resetLimiter, authController.forgotPassword);
-router.post('/auth/verify-reset-otp', authController.verifyResetOTP);
-router.post('/auth/reset-password', authController.resetPassword);
 
 // Visit Routes
 router.post('/visit', authMiddleware, visitController.createVisit);
