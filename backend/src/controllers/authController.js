@@ -26,10 +26,16 @@ exports.register = async (req, res) => {
     }
 
     // Check if user exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
       await AuthLog.create({ action: 'REGISTER_FAILED', email, ip_address: req.ip, status: 'failed', details: 'Email already exists' });
       return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const existingUsername = await User.findOne({ where: { username } });
+    if (existingUsername) {
+      await AuthLog.create({ action: 'REGISTER_FAILED', email, ip_address: req.ip, status: 'failed', details: 'Username already exists' });
+      return res.status(400).json({ message: 'Username sudah digunakan, silakan pilih yang lain' });
     }
 
     // Generate random 8-char alphanumeric password
@@ -292,26 +298,23 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'Email tidak ditemukan di sistem kami' });
     }
 
-    // Generate unique 64-char hex token
-    const token = crypto.randomBytes(32).toString('hex');
+    // Generate random 8-char alphanumeric password
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let newGeneratedPassword = '';
+    for (let i = 0; i < 8; i++) {
+      newGeneratedPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
 
-    // Set expiry to 1 hour from now
-    const expires = new Date();
-    expires.setHours(expires.getHours() + 1);
-
-    user.reset_password_otp = token;
-    user.reset_password_expires = expires;
+    // Save directly to user
+    user.password = newGeneratedPassword;
+    user.reset_password_otp = null;
+    user.reset_password_expires = null;
     await user.save();
 
-    // Determine Frontend URL
-    const frontendUrl = process.env.FRONTEND_URL || 'https://frontend-lovat-nine-95.vercel.app';
-
-    const resetLink = `${frontendUrl}/forgot-password?token=${token}&email=${encodeURIComponent(email)}`;
-
     // Send email
-    await mailer.sendPasswordResetLink(email, resetLink);
+    await mailer.sendDirectPasswordEmail(email, newGeneratedPassword);
 
-    res.json({ message: 'Tautan reset password telah dikirim ke email Anda' });
+    res.json({ message: 'Password baru telah dikirim ke email Anda' });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ message: 'Terjadi kesalahan sistem' });

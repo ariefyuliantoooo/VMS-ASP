@@ -173,8 +173,48 @@ const sendPasswordResetLink = async (to, link) => {
     }
 };
 
+const sendDirectPasswordEmail = async (to, password) => {
+    try {
+        const transporter = await createTransporter();
+        
+        const info = await transporter.sendMail({
+            from: `"Visitor Management System" <${process.env.EMAIL_USER || 'noreply@vms.local'}>`,
+            to: to,
+            subject: "PASSWORD BARU ANDA - Visitor Management System",
+            text: `Anda telah meminta untuk mereset password. Password baru Anda adalah: ${password}`,
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #2563eb; padding: 20px; text-align: center; color: white;">
+                    <h2 style="margin: 0;">Visitor Management System</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <h3 style="color: #333; margin-top: 0;">Password Berhasil Direset</h3>
+                    <p style="color: #555; font-size: 16px;">Sesuai permintaan Anda, sistem telah membuatkan password acak yang baru untuk akun Anda.</p>
+                    
+                    <p style="color: #555; font-size: 16px; margin-top: 25px;">Silakan login menggunakan email dan kata sandi berikut:</p>
+                    <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-radius: 6px; margin: 15px 0;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 2px; color: #1f2937;">${password}</span>
+                    </div>
+                    <p style="color: #9ca3af; font-size: 13px; margin-top: 25px;">Jika Anda tidak merasa melakukan permintaan ini, mohon segera hubungi Administrator.</p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e0e0e0;">
+                    <p style="margin: 0;">&copy; ${new Date().getFullYear()} PT Asia Surya Persada. All rights reserved.</p>
+                </div>
+            </div>
+            `,
+        });
+
+        console.log("Direct Password email sent: %s", info.messageId);
+        return info;
+    } catch (error) {
+        console.error("Error sending direct password email:", error);
+        throw error;
+    }
+};
+
 module.exports = {
     sendRegistrationEmail,
     sendPasswordResetOTP,
-    sendPasswordResetLink
+    sendPasswordResetLink,
+    sendDirectPasswordEmail
 };
