@@ -304,7 +304,8 @@ exports.forgotPassword = async (req, res) => {
     await user.save();
 
     // Determine Frontend URL
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://frontend-lovat-nine-95.vercel.app';
+
     const resetLink = `${frontendUrl}/forgot-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     // Send email
