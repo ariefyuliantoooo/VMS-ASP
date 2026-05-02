@@ -1,6 +1,9 @@
 const { User, AuthLog } = require('../models');
 const jwt = require('jsonwebtoken');
 const mailer = require('../utils/mailer');
+const crypto = require('crypto');
+
+
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -8,13 +11,13 @@ exports.register = async (req, res) => {
     const { username, email, password, full_name, company, phone, inviteToken } = req.body;
 
     let assignedRole = 'USER';
-    
+
     // Check if invite token passed
     if (inviteToken) {
       try {
         const decoded = jwt.verify(inviteToken, process.env.JWT_SECRET);
         if (decoded.role === 'STAFF' && decoded.type === 'INVITATION') {
-           assignedRole = 'STAFF';
+          assignedRole = 'STAFF';
         }
       } catch (err) {
         await AuthLog.create({ action: 'REGISTER_FAILED', email, ip_address: req.ip, status: 'failed', details: 'Invalid invite token' });
@@ -29,30 +32,36 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
+    // Generate random 8-char alphanumeric password
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let generatedPassword = '';
+    for (let i = 0; i < 8; i++) {
+      generatedPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date();
+    expires.setMinutes(expires.getMinutes() + 15);
+
     const newUser = await User.create({
       username,
       email,
-      password,
+      password: generatedPassword,
       full_name,
       company,
       phone,
       role: assignedRole,
-      is_verified: false
+      is_verified: true, // Account is active immediately
+      reset_password_otp: otp,
+      reset_password_expires: expires
     });
 
-    // Generate Verification Token
-    const verifyToken = jwt.sign(
-      { id: newUser.id, type: 'VERIFICATION' },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    
-    // Send email without blocking the response
-    mailer.sendVerificationEmail(email, verifyToken).catch(console.error);
+    // Send welcome email with the generated password (no verification link needed)
+    mailer.sendRegistrationEmail(email, generatedPassword).catch(console.error);
 
     await AuthLog.create({ action: 'REGISTER_SUCCESS', email, ip_address: req.ip, status: 'success', details: `Registered as ${assignedRole}` });
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
       user: {
         id: newUser.id,
@@ -64,8 +73,24 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    await AuthLog.create({ action: 'REGISTER_FAILED', email: req.body?.email || 'unknown', ip_address: req.ip, status: 'failed', details: error.message });
-    res.status(500).json({ message: 'Error registering user', error: error.message });
+
+    let details = error.message;
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      details = error.errors.map(e => e.message).join(', ');
+    }
+
+    await AuthLog.create({
+      action: 'REGISTER_FAILED',
+      email: req.body?.email || 'unknown',
+      ip_address: req.ip,
+      status: 'failed',
+      details: details
+    });
+
+    res.status(400).json({
+      message: 'Registrasi gagal karena kesalahan validasi data.',
+      error: details
+    });
   }
 };
 
@@ -161,14 +186,14 @@ exports.verifyEmail = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.type !== 'VERIFICATION') {
-        return res.status(400).json({ message: 'Token tidak valid' });
+      return res.status(400).json({ message: 'Token tidak valid' });
     }
 
     const user = await User.findByPk(decoded.id);
     if (!user) return res.status(404).json({ message: 'User tidak ditemukan' });
 
     if (user.is_verified) {
-        return res.status(400).json({ message: 'Email sudah terverifikasi' });
+      return res.status(400).json({ message: 'Email sudah terverifikasi' });
     }
 
     user.is_verified = true;
@@ -219,9 +244,9 @@ exports.getAuthLogs = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
-    
+
     const { username, email, password, full_name, role, company, phone } = req.body;
-    
+
     // Check if user exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -239,15 +264,15 @@ exports.createUser = async (req, res) => {
       is_verified: true // Admins create verified users directly
     });
 
-    await AuthLog.create({ 
-        action: 'ADMIN_CREATE_USER', 
-        email: req.user.email, 
-        ip_address: req.ip, 
-        status: 'success', 
-        details: `Created user ${email} with role ${role}` 
+    await AuthLog.create({
+      action: 'ADMIN_CREATE_USER',
+      email: req.user.email,
+      ip_address: req.ip,
+      status: 'success',
+      details: `Created user ${email} with role ${role}`
     });
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'User created successfully',
       user: { id: newUser.id, username, email, full_name, role }
     });
@@ -256,3 +281,107 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ message: 'Error creating user', error: error.message });
   }
 };
+
+// Forgot Password - Send Unique Token Link
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Email tidak ditemukan di sistem kami' });
+    }
+
+    // Generate unique 64-char hex token
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Set expiry to 1 hour from now
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1);
+
+    user.reset_password_otp = token;
+    user.reset_password_expires = expires;
+    await user.save();
+
+    // Determine Frontend URL
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/forgot-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+    // Send email
+    await mailer.sendPasswordResetLink(email, resetLink);
+
+    res.json({ message: 'Tautan reset password telah dikirim ke email Anda' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan sistem' });
+  }
+};
+
+
+// Verify Reset OTP
+exports.verifyResetOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    if (user.reset_password_otp !== otp) {
+      return res.status(400).json({ message: 'Kode OTP salah' });
+    }
+
+    if (new Date() > new Date(user.reset_password_expires)) {
+      return res.status(400).json({ message: 'Kode OTP sudah kadaluarsa' });
+    }
+
+    res.json({ message: 'OTP valid', valid: true });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan sistem' });
+  }
+};
+
+// Reset Password - Now confirm via token and generate a permanent password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, token } = req.body;
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    if (!user.reset_password_otp || user.reset_password_otp !== token) {
+      return res.status(400).json({ message: 'Token reset password tidak valid' });
+    }
+
+    if (new Date() > new Date(user.reset_password_expires)) {
+      return res.status(400).json({ message: 'Token reset password sudah kadaluarsa' });
+    }
+
+    // Generate random 8-char alphanumeric password
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let newGeneratedPassword = '';
+    for (let i = 0; i < 8; i++) {
+      newGeneratedPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    // Update password (hashing is handled by Sequelize hook in User model)
+    user.password = newGeneratedPassword;
+    user.reset_password_otp = null;
+    user.reset_password_expires = null;
+    await user.save();
+
+    res.json({ 
+      message: 'Password berhasil direset.', 
+      newPassword: newGeneratedPassword 
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan sistem' });
+  }
+};
+
+
