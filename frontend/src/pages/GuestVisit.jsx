@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { User, Building2, Phone, Calendar, UserCheck, MessageSquare, CheckCircle2, Download, QrCode } from 'lucide-react';
+import { User, Building2, Phone, Calendar, UserCheck, MessageSquare, CheckCircle2, Download, QrCode, MapPin } from 'lucide-react';
 
 const GuestVisit = () => {
     const [formData, setFormData] = useState({
@@ -10,7 +10,8 @@ const GuestVisit = () => {
         phone: '',
         visit_purpose: '',
         person_to_meet: '',
-        visit_date: new Date().toISOString().split('T')[0]
+        visit_date: new Date().toISOString().split('T')[0],
+        location: ''
     });
     const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -219,25 +220,41 @@ const GuestVisit = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Bertemu Dengan</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600">
-                                    <UserCheck className="h-5 w-5" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Bertemu Dengan</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600">
+                                        <UserCheck className="h-5 w-5" />
+                                    </div>
+                                    <select 
+                                        name="person_to_meet" required 
+                                        value={formData.person_to_meet} onChange={handleChange} 
+                                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl outline-none transition-all shadow-sm group-hover:bg-gray-50 appearance-none disabled:bg-gray-100"
+                                        disabled={fetchingStaff || staffList.length === 0}
+                                    >
+                                        <option value="">
+                                            {fetchingStaff ? 'Memuat daftar staff...' : staffList.length === 0 ? 'Tidak ada staff tersedia' : 'Pilih staff yang ditemui...'}
+                                        </option>
+                                        {staffList.map(s => (
+                                            <option key={s.id} value={s.full_name}>{s.full_name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <select 
-                                    name="person_to_meet" required 
-                                    value={formData.person_to_meet} onChange={handleChange} 
-                                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl outline-none transition-all shadow-sm group-hover:bg-gray-50 appearance-none disabled:bg-gray-100"
-                                    disabled={fetchingStaff || staffList.length === 0}
-                                >
-                                    <option value="">
-                                        {fetchingStaff ? 'Memuat daftar staff...' : staffList.length === 0 ? 'Tidak ada staff tersedia' : 'Pilih staff yang ditemui...'}
-                                    </option>
-                                    {staffList.map(s => (
-                                        <option key={s.id} value={s.full_name}>{s.full_name}</option>
-                                    ))}
-                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Lokasi</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600">
+                                        <MapPin className="h-5 w-5" />
+                                    </div>
+                                    <input 
+                                        type="text" name="location" 
+                                        value={formData.location} onChange={handleChange} 
+                                        placeholder="Lobby, Ruang Meeting 1, dll"
+                                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl outline-none transition-all shadow-sm group-hover:bg-gray-50"
+                                    />
+                                </div>
                             </div>
                         </div>
 

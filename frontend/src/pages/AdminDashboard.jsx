@@ -75,7 +75,7 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteUser = async (id) => {
-        if (!window.confirm('Yakin ingin menghapus user ini secara permanen?')) return;
+        if (!window.confirm('Yakin ingin menghapus Visitor ini secara permanen?')) return;
         try {
             await api.delete(`/users/${id}`);
             setUsersList(prev => prev.filter(u => u.id !== id));
@@ -120,7 +120,7 @@ const AdminDashboard = () => {
             });
             fetchAllData(); // Refresh to get the real ID and details
         } catch (err) {
-            setCreateError(err.response?.data?.message || 'Gagal membuat user');
+            setCreateError(err.response?.data?.message || 'Gagal membuat Visitor');
         } finally {
             setCreateLoading(false);
         }
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
                 <div className="flex bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden text-sm font-semibold">
                     {[ 
                         { k: 'VISITS', l: 'Manage Visits', i: ShieldAlert }, 
-                        { k: 'USERS', l: 'Manage Users', i: Users }, 
+                        { k: 'USERS', l: 'Manage Visitors', i: Users }, 
                         { k: 'LOGS', l: 'System Logs', i: Database } 
                     ].map(t => (
                         <button 
@@ -206,14 +206,14 @@ const AdminDashboard = () => {
                                     <div className="flex justify-between items-center mb-3">
                                         <div className="flex items-center gap-2">
                                             <Users className="h-4 w-4 text-indigo-500" />
-                                            <h2 className="text-sm font-bold text-gray-900">Manajemen Pengguna</h2>
+                                            <h2 className="text-sm font-bold text-gray-900">Manajemen Visitor</h2>
                                         </div>
                                         <div className="flex gap-2">
                                             <button 
                                                 onClick={() => setShowCreateModal(true)} 
                                                 className="text-xs font-semibold bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black transition"
                                             >
-                                                Tambah User Manual
+                                                Tambah Visitor Manual
                                             </button>
                                             <button onClick={handleGenerateInvite} className="text-xs font-semibold bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
                                                 Generate Invite Link
@@ -231,7 +231,7 @@ const AdminDashboard = () => {
                                             <form onSubmit={handleCreateUser} className="space-y-4">
                                                 {createError && <p className="text-xs text-red-500 px-3 py-2 bg-red-50 rounded-lg">{createError}</p>}
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <input type="text" placeholder="Username" required value={newUserForm.username} onChange={e=>setNewUserForm({...newUserForm, username: e.target.value})} className="p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                                                    <input type="text" placeholder="Nama Visitor (Username)" required value={newUserForm.username} onChange={e=>setNewUserForm({...newUserForm, username: e.target.value})} className="p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                                                     <input type="email" placeholder="Email" required value={newUserForm.email} onChange={e=>setNewUserForm({...newUserForm, email: e.target.value})} className="p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -243,7 +243,7 @@ const AdminDashboard = () => {
                                                         <option value="STAFF">STAFF</option>
                                                         <option value="SECURITY">SECURITY</option>
                                                         <option value="ADMIN">ADMIN</option>
-                                                        <option value="USER">USER</option>
+                                                        <option value="USER">VISITOR</option>
                                                     </select>
                                                     <button type="submit" disabled={createLoading} className="bg-indigo-600 text-white font-bold rounded-xl py-3 hover:bg-indigo-700 transition-all disabled:bg-indigo-300">
                                                         {createLoading ? 'Memproses...' : 'Simpan User'}
@@ -281,7 +281,7 @@ const AdminDashboard = () => {
                                                         <td className="px-4 py-3 text-gray-500">{u.email}</td>
                                                         <td className="px-4 py-3">
                                                             <span className={`px-2 py-1 text-[10px] font-bold rounded-lg ${u.role==='ADMIN'?'bg-red-100 text-red-700':u.role==='SECURITY'?'bg-blue-100 text-blue-700':u.role==='STAFF'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700'}`}>
-                                                                {u.role}
+                                                                {u.role === 'USER' ? 'VISITOR' : u.role}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-right">

@@ -44,7 +44,19 @@ const Visit = sequelize.define('Visit', {
     allowNull: false,
     unique: true,
   },
-    status: {
+  check_in_time: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  check_out_time: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  status: {
     type: DataTypes.STRING,
     defaultValue: 'PENDING',
     validate: {

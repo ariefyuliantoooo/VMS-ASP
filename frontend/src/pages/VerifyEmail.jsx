@@ -22,7 +22,12 @@ const VerifyEmail = () => {
             try {
                 const res = await api.get(`/verify-email?token=${token}`);
                 setStatus('success');
-                setMessage(res.data.message || 'Email berhasil diverifikasi! Anda sekarang dapat login.');
+                // Get email from query params if available (I added it in mailer utility)
+                const userEmail = queryParams.get('email') || '';
+                setMessage(res.data.message || 'Email berhasil diverifikasi! Silakan login menggunakan Kata Sandi Acak yang dikirim ke inbox Anda.');
+                
+                // Store email in state to pass to forgot-password if needed
+                if(userEmail) window.localStorage.setItem('pending_verify_email', userEmail);
             } catch (err) {
                 setStatus('error');
                 setMessage(err.response?.data?.message || 'Token verifikasi tidak valid atau sudah kadaluarsa.');
@@ -60,7 +65,17 @@ const VerifyEmail = () => {
 
                     <p className="text-gray-600 mb-6">{message}</p>
 
-                    {status !== 'loading' && (
+                    {status === 'success' && (
+                        <Link 
+                            to="/login"
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform active:scale-95"
+                        >
+                            Login Sekarang
+                        </Link>
+                    )}
+
+
+                    {(status === 'error' || status === 'loading') && (
                         <Link 
                             to="/login"
                             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

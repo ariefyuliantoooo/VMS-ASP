@@ -7,13 +7,11 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    password: '',
     full_name: '',
     company: '',
     phone: '',
     role: 'USER'
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const { register } = useContext(AuthContext);
@@ -42,9 +40,9 @@ const Register = () => {
          <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md bg-white p-8 rounded-lg shadow text-center">
                 <div className="text-green-500 mb-4 flex justify-center"><MailCheck className="h-16 w-16" /></div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
-                <p className="text-gray-600 mb-6">Silakan periksa kotak masuk email Anda (termasuk folder Spam) untuk memverifikasi akun ini sebelum dapat digunakan untuk login.</p>
-                <Link to="/login" className="text-green-600 font-medium hover:text-green-500">Kembali ke Halaman Login</Link>
+                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
+                <p className="text-gray-600 mb-6">Akun Visitor Anda telah diaktifkan. Silakan periksa kotak masuk email Anda untuk mendapatkan <strong>Kata Sandi Acak</strong> dan silakan Login.</p>
+                <Link to="/login" className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-all shadow-lg">Login Sekarang</Link>
             </div>
          </div>
       );
@@ -59,7 +57,7 @@ const Register = () => {
             </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create an account
+          Create a Visitor account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Already have an account?{' '}
@@ -86,8 +84,8 @@ const Register = () => {
             
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
-                <label className="block text-sm font-medium text-gray-700">Username *</label>
-                <input name="username" type="text" required value={formData.username} onChange={handleChange} className="input-field mt-1" />
+                <label className="block text-sm font-medium text-gray-700">Nama Visitor (Username) *</label>
+                <input name="username" type="text" required value={formData.username} onChange={handleChange} className="input-field mt-1" placeholder="cth: john_doe" />
                 </div>
                 <div>
                 <label className="block text-sm font-medium text-gray-700">Full Name *</label>
@@ -100,27 +98,6 @@ const Register = () => {
               <input name="email" type="email" required value={formData.email} onChange={handleChange} className="input-field mt-1" />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password *</label>
-              <div className="relative mt-1">
-                <input 
-                  name="password" 
-                  type={showPassword ? "text" : "password"} 
-                  required 
-                  value={formData.password} 
-                  onChange={handleChange} 
-                  className="input-field block w-full pr-10" 
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Company</label>
@@ -131,6 +108,7 @@ const Register = () => {
                   <input name="phone" type="text" value={formData.phone} onChange={handleChange} className="input-field mt-1" />
                 </div>
             </div>
+
 
             <div>
               <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">

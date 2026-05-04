@@ -69,7 +69,7 @@ const Navbar = () => {
               <div className="ml-3 pl-3 border-l border-gray-100 flex items-center gap-2">
                 <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-gray-900 leading-none">{user.full_name}</p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">{user.role}</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">{user.role === 'USER' ? 'VISITOR' : user.role}</p>
                 </div>
                 <button
                   onClick={handleLogout}

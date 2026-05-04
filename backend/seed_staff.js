@@ -1,15 +1,21 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const bcrypt = require('bcrypt');
 
-const DATABASE_URL = "postgresql://postgres.sqokrrhcsxcszhvmytzt:jOFxEyCeifFnUj20@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const sequelize = new Sequelize(DATABASE_URL, {
-  dialect: 'postgres',
-  logging: false,
-  dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false }
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: 'postgres',
+    logging: false,
   }
-});
+);
+
 
 const User = sequelize.define('User', {
   username: DataTypes.STRING,
@@ -31,15 +37,15 @@ const User = sequelize.define('User', {
       defaults: {
         email: 'staff@vms.com',
         password: hashedPassword,
-        full_name: 'Dany Ramadhan (Staff)',
+        full_name: 'Arief Yulianto (Staff)',
         role: 'STAFF',
-        phone: '0812345678',
+        phone: '085272123300',
         company: 'VMS Official'
       }
     });
 
     if (created) {
-       console.log('SUCCESS: Akun STAFF baru telah dibuat: Dany Ramadhan (Staff)');
+       console.log('SUCCESS: Akun STAFF baru telah dibuat: Arief Yulianto (Staff)');
     } else {
        console.log('INFO: Akun STAFF sudah ada.');
        // Ensure role is STAFF just in case

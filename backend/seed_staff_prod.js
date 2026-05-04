@@ -31,10 +31,10 @@ const User = sequelize.define('User', {
       {
         username: 'staff_official',
         email: 'staff@vms-asp.com',
-        full_name: 'Dany Ramadhan (Staff)',
+        full_name: 'Arief Yulianto (Staff)',
         role: 'STAFF',
         company: 'VMS ASP',
-        phone: '08123456789'
+        phone: '085272123300'
       },
       {
         username: 'operational_staff',
@@ -42,7 +42,7 @@ const User = sequelize.define('User', {
         full_name: 'Operational Manager',
         role: 'STAFF',
         company: 'VMS ASP',
-        phone: '08129876543'
+        phone: '085272123300'
       }
     ];
 

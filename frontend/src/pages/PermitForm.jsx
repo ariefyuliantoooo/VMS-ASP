@@ -2,168 +2,289 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import {
+  User, Building2, Briefcase, MapPin, Calendar,
+  Users, FileText, Upload, ArrowLeft, CheckCircle2,
+  ClipboardList, Link as LinkIcon,
+} from 'lucide-react';
+
+/* ── Shared field wrapper ── */
+const Field = ({ label, icon: Icon, children }) => (
+  <div className="space-y-1.5">
+    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1 block">
+      {label}
+    </label>
+    <div className="relative group">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+        <Icon className="h-5 w-5" />
+      </div>
+      {children}
+    </div>
+  </div>
+);
+
+const inputCls =
+  'w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all shadow-sm hover:bg-gray-50/50 focus:hover:bg-white text-sm';
 
 const PermitForm = () => {
-    const [visits, setVisits] = useState([]);
-    const [formData, setFormData] = useState({
-        visitor_id: '',
-        worker_name: '',
-        company: '',
-        job_type: '',
-        work_location: '',
-        start_date: '',
-        end_date: '',
-        pic_company: ''
-    });
-    const [file, setFile] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [visits, setVisits] = useState([]);
+  const [formData, setFormData] = useState({
+    visitor_id: '',
+    worker_name: '',
+    company: '',
+    job_type: '',
+    work_location: '',
+    start_date: '',
+    end_date: '',
+    pic_company: '',
+  });
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-    // Fetch visits to populate select dropdown
-    useEffect(() => {
-         const fetchVisits = async () => {
-            try {
-                const res = await api.get('/visits/me');
-                setVisits(res.data);
-            } catch (err) {
-                console.error("Failed to fetch visits for permit dropdown", err);
-            }
-        };
-        fetchVisits();
-    }, []);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    const fetchVisits = async () => {
+      try {
+        const res = await api.get('/visits/me');
+        setVisits(res.data);
+      } catch (err) {
+        console.error('Failed to fetch visits for permit dropdown', err);
+      }
     };
+    fetchVisits();
+  }, []);
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleFileChange = (e) => setFile(e.target.files[0]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-        const d = new FormData();
-        Object.keys(formData).forEach(key => {
-            d.append(key, formData[key]);
-        });
-        if (file) {
-            d.append('permit_file', file);
-        }
+    const d = new FormData();
+    Object.keys(formData).forEach(key => d.append(key, formData[key]));
+    if (file) d.append('permit_file', file);
 
-        try {
-            await api.post('/permit', d, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            navigate('/permits');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to submit work permit');
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      await api.post('/permit', d, { headers: { 'Content-Type': 'multipart/form-data' } });
+      navigate('/permits');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengirim work permit.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            
-            <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900">
-                            Apply for Work Permit
-                        </h3>
-                        <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                            Contractors and vendors must link a permit to an existing visit request.
-                        </p>
-                    </div>
-                    <div className="px-4 py-5 sm:p-6">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {error && (
-                                <div className="p-3 bg-red-100 text-red-700 border border-red-200 rounded text-sm">
-                                    {error}
-                                </div>
-                            )}
+  return (
+    <div className="min-h-screen bg-[#F0F7FF]">
+      <Navbar />
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Link to Visit Request *</label>
-                                <select 
-                                    name="visitor_id" 
-                                    required 
-                                    value={formData.visitor_id} 
-                                    onChange={handleChange} 
-                                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 hover:border-blue-500 sm:text-sm rounded-md"
-                                >
-                                    <option value="" disabled>Select a visit...</option>
-                                    {visits.map(v => (
-                                        <option key={v.id} value={v.id}>
-                                            {v.full_name} - {v.person_to_meet} ({new Date(v.visit_date).toLocaleDateString()})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Worker Name *</label>
-                                    <input type="text" name="worker_name" required value={formData.worker_name} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Contractor Company *</label>
-                                    <input type="text" name="company" required value={formData.company} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                            </div>
+      <main className="flex flex-col md:flex-row min-h-[calc(100vh-56px)]">
+        {/* ── Left Panel (Desktop) ── */}
+        <div className="hidden md:flex md:w-5/12 bg-gradient-to-br from-indigo-700 to-blue-700 p-12 flex-col justify-between text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500 rounded-full -mr-36 -mt-36 opacity-40 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500 rounded-full -ml-36 -mb-36 opacity-30 blur-3xl pointer-events-none" />
 
-                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Job Type (e.g., Electrical, Network) *</label>
-                                    <input type="text" name="job_type" required value={formData.job_type} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Work Location Internal *</label>
-                                    <input type="text" name="work_location" required value={formData.work_location} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                            </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-12">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                <Briefcase className="text-indigo-600 w-5 h-5" />
+              </div>
+              <span className="text-xl font-black tracking-tight">
+                Work Permit <span className="text-indigo-200">VMS</span>
+              </span>
+            </div>
 
-                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Start Date *</label>
-                                    <input type="date" name="start_date" required value={formData.start_date} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">End Date *</label>
-                                    <input type="date" name="end_date" required value={formData.end_date} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                            </div>
+            <h1 className="text-4xl font-black leading-tight mb-5">
+              Apply for<br />Work Permit
+            </h1>
+            <p className="text-indigo-100 text-base font-medium leading-relaxed max-w-xs">
+              Kontraktor dan vendor wajib melampirkan izin kerja sebelum memasuki area operasional.
+            </p>
+          </div>
 
-                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">PIC Company (Internal Sponsor) *</label>
-                                    <input type="text" name="pic_company" required value={formData.pic_company} onChange={handleChange} className="input-field mt-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Attach Document (PDF, Image)</label>
-                                    <input type="file" onChange={handleFileChange} className="mt-1 block w-full outline-none py-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-5 border-t border-gray-200 mt-6 space-x-3">
-                                <button type="button" onClick={() => navigate('/permits')} className="btn-secondary">
-                                    Cancel
-                                </button>
-                                <button type="submit" disabled={loading} className="btn-primary">
-                                    {loading ? 'Submitting...' : 'Submit Permit'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </main>
+          {/* Info card */}
+          <div className="relative z-10 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/20 space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-indigo-200 mb-3">Informasi Penting</p>
+            {[
+              'Permit harus dikaitkan dengan visit request aktif',
+              'Lampirkan dokumen PDF/gambar jika tersedia',
+              'Permit ditinjau oleh tim keamanan internal',
+            ].map((txt, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <CheckCircle2 className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-indigo-100 font-medium leading-snug">{txt}</span>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+
+        {/* ── Right Panel: Form ── */}
+        <div className="flex-1 flex items-start justify-center p-5 py-8 md:p-12 overflow-y-auto">
+          <div className="max-w-xl w-full">
+            {/* Mobile header */}
+            <div className="md:hidden flex items-center gap-2 mb-8">
+              <Briefcase className="text-indigo-600 w-7 h-7" />
+              <span className="text-xl font-black text-indigo-600">
+                Work Permit <span className="text-indigo-400">VMS</span>
+              </span>
+            </div>
+
+            {/* Back link */}
+            <button
+              onClick={() => navigate('/permits')}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-indigo-600 mb-6 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Kembali ke Work Permits
+            </button>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-gray-900 mb-1">Formulir Work Permit</h2>
+              <p className="text-gray-400 font-medium text-sm">
+                Kontraktor & vendor wajib menautkan permit ke visit request yang aktif.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Error */}
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 animate-fade-in">
+                  <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-600 font-semibold">{error}</p>
+                </div>
+              )}
+
+              {/* Link to Visit */}
+              <Field label="Tautkan ke Visit Request" icon={LinkIcon}>
+                <select
+                  name="visitor_id" required
+                  value={formData.visitor_id} onChange={handleChange}
+                  className={`${inputCls} appearance-none`}
+                >
+                  <option value="" disabled>Pilih visit yang terkait...</option>
+                  {visits.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.full_name} → {v.person_to_meet} ({new Date(v.visit_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              {/* Row: Worker + Company */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Nama Pekerja" icon={User}>
+                  <input
+                    type="text" name="worker_name" required
+                    value={formData.worker_name} onChange={handleChange}
+                    placeholder="Nama teknisi / pekerja"
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Perusahaan Kontraktor" icon={Building2}>
+                  <input
+                    type="text" name="company" required
+                    value={formData.company} onChange={handleChange}
+                    placeholder="PT. Kontraktor Jaya"
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+
+              {/* Row: Job type + Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Jenis Pekerjaan" icon={Briefcase}>
+                  <input
+                    type="text" name="job_type" required
+                    value={formData.job_type} onChange={handleChange}
+                    placeholder="Electrical, Network, dll."
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Lokasi Kerja" icon={MapPin}>
+                  <input
+                    type="text" name="work_location" required
+                    value={formData.work_location} onChange={handleChange}
+                    placeholder="Gedung A, Lantai 3"
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+
+              {/* Row: Start + End date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Tanggal Mulai" icon={Calendar}>
+                  <input
+                    type="date" name="start_date" required
+                    value={formData.start_date} onChange={handleChange}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Tanggal Selesai" icon={Calendar}>
+                  <input
+                    type="date" name="end_date" required
+                    value={formData.end_date} onChange={handleChange}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+
+              {/* Row: PIC + Upload */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="PIC Internal (Sponsor)" icon={Users}>
+                  <input
+                    type="text" name="pic_company" required
+                    value={formData.pic_company} onChange={handleChange}
+                    placeholder="Nama PIC perusahaan"
+                    className={inputCls}
+                  />
+                </Field>
+
+                {/* File upload */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1 block">
+                    Lampiran Dokumen
+                  </label>
+                  <label className="flex flex-col items-center justify-center w-full h-[58px] bg-white border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+                    <div className="flex items-center gap-2 text-gray-400 group-hover:text-indigo-500 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span className="text-xs font-semibold">
+                        {file ? file.name : 'PDF / Gambar (opsional)'}
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-200/60 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-60 disabled:scale-100 mt-2"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ClipboardList className="w-5 h-5" />
+                    Kirim Work Permit
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 };
 
 export default PermitForm;

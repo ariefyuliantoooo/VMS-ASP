@@ -3,7 +3,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import StatsCard from '../components/StatsCard';
-import { ShieldCheck, CheckCircle, XCircle, Search, Users, LogIn, LogOut, Clock3, Briefcase, AlertCircle, Camera, Smartphone, Monitor, RefreshCw, Building2, Phone, User as UserIcon } from 'lucide-react';
+import { ShieldCheck, CheckCircle, XCircle, Search, Users, LogIn, LogOut, Clock3, Briefcase, AlertCircle, Camera, Smartphone, Monitor, RefreshCw, Building2, Phone, User as UserIcon, MapPin } from 'lucide-react';
 
 const SecurityDashboard = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -294,7 +294,7 @@ const SecurityDashboard = () => {
             <ShieldCheck className="h-5 w-5 text-indigo-600" />
             <h1 className="text-lg font-black text-gray-900">Security Checkpoint</h1>
           </div>
-          <p className="text-xs text-gray-400 mt-0.5 ml-7">Scan QR atau masukkan Pass ID pengunjung</p>
+          <p className="text-xs text-gray-400 mt-0.5 ml-7">Scan QR atau masukkan Pass ID Visitor</p>
         </div>
 
         {/* ===== SCANNER QR ===== */}
@@ -337,7 +337,7 @@ const SecurityDashboard = () => {
                   type="text"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
-                  placeholder="Pass ID pengunjung..."
+                  placeholder="Pass ID Visitor..."
                   className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
                   disabled={loading}
                 />
@@ -375,14 +375,14 @@ const SecurityDashboard = () => {
               <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5">
                   <div className="flex items-center gap-2 mb-4 border-b pb-3">
                       <UserIcon className="h-5 w-5 text-indigo-600" />
-                      <h3 className="text-md font-black text-gray-900">Validasi Pengunjung</h3>
+                      <h3 className="text-md font-black text-gray-900">Validasi Visitor</h3>
                       <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${scanInfo.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : scanInfo.status === 'CHECKED_IN' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
                           {scanInfo.status}
                       </span>
                   </div>
 
                   <div className="space-y-2 mb-5">
-                      {[['Nama', scanInfo.full_name], ['Perusahaan', scanInfo.company], ['Tujuan Bertemu', scanInfo.person_to_meet], ['Keperluan', scanInfo.visit_purpose]].map(([k, v]) => (
+                      {[['Visitor ID', scanInfo.qr_code ? scanInfo.qr_code.split('-')[0].toUpperCase() : scanInfo.id], ['Nama', scanInfo.full_name], ['Perusahaan', scanInfo.company], ['Tujuan Bertemu', scanInfo.person_to_meet], ['Lokasi', scanInfo.location || '—'], ['Keperluan', scanInfo.visit_purpose]].map(([k, v]) => (
                           <div key={k} className="flex flex-col text-sm border-b border-gray-50 pb-1">
                               <span className="text-gray-400 text-xs">{k}</span>
                               <span className="font-bold text-gray-900">{v}</span>
@@ -432,9 +432,9 @@ const SecurityDashboard = () => {
           )}
         </div>
 
-        {/* ===== DAFTAR PENGUNJUNG ===== */}
+        {/* ===== DAFTAR VISITOR ===== */}
         <div className="space-y-4">
-          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Pengunjung</p>
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Visitor</p>
 
           {/* Stats 2-col grid */}
           <div className="grid grid-cols-2 gap-3">
@@ -471,12 +471,12 @@ const SecurityDashboard = () => {
           {visitsLoading ? (
             <div className="bg-white rounded-2xl p-10 flex flex-col items-center gap-3 shadow-sm border border-gray-100">
               <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-              <p className="text-xs text-gray-400 font-medium">Memuat data pengunjung...</p>
+              <p className="text-xs text-gray-400 font-medium">Memuat data Visitor...</p>
             </div>
           ) : filteredVisits.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 flex flex-col items-center gap-3 shadow-sm border border-gray-100">
               <Users className="h-10 w-10 text-gray-200" />
-              <p className="text-sm text-gray-400 font-medium">Belum ada pengunjung dengan status ini.</p>
+              <p className="text-sm text-gray-400 font-medium">Belum ada Visitor dengan status ini.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -506,6 +506,8 @@ const SecurityDashboard = () => {
                       <div className="flex flex-col gap-1 text-xs text-gray-500">
                         <span className="flex items-center gap-1.5"><UserIcon className="w-3 h-3 text-gray-400" />{visit.person_to_meet}</span>
                         {visit.phone && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-400" />{visit.phone}</span>}
+                        {visit.location && <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-gray-400" />{visit.location}</span>}
+                        {visit.check_in_time && <span className="flex items-center gap-1.5"><Clock3 className="w-3 h-3 text-gray-400" />Check In: {new Date(visit.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>}
                         <span className="flex items-center gap-1.5">
                           {visit.WorkPermit
                             ? <><Briefcase className="w-3 h-3 text-blue-500" /><span className="text-blue-600 font-medium">Work Permit Ada</span></>

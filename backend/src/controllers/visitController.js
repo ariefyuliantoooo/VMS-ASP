@@ -7,7 +7,7 @@ const emailService = require('../utils/emailService');
 // Create a new visit
 exports.createVisit = async (req, res) => {
   try {
-    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date } = req.body;
+    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date, location } = req.body;
     const user_id = req.user.id; // From auth middleware
 
     // Generate unique ID for QR Code
@@ -24,6 +24,7 @@ exports.createVisit = async (req, res) => {
       visit_purpose,
       person_to_meet,
       visit_date,
+      location,
       qr_code: uniqueId // We store the unique string, frontend logic or backend will serve the image
     });
 
@@ -45,7 +46,7 @@ exports.createVisit = async (req, res) => {
 // Create a public visit (Guest registration)
 exports.createPublicVisit = async (req, res) => {
   try {
-    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date } = req.body;
+    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date, location } = req.body;
 
     // Generate unique ID for QR Code
     const uniqueId = crypto.randomUUID();
@@ -61,6 +62,7 @@ exports.createPublicVisit = async (req, res) => {
       visit_purpose,
       person_to_meet,
       visit_date,
+      location,
       qr_code: uniqueId
     });
 
@@ -183,14 +185,18 @@ exports.updateVisitStatus = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        // If newly CHECKED_IN via Security Approve, notify PIC
         if (status === 'CHECKED_IN' && visit.status !== 'CHECKED_IN') {
+             visit.check_in_time = new Date();
              try {
                 const pic = await User.findOne({ where: { full_name: visit.person_to_meet, role: 'STAFF' } });
                 if (pic && pic.email) {
                     emailService.sendPICCheckInAlert(pic.email, visit.full_name);
                 }
             } catch (err) { console.error(err); }
+        } else if (status === 'DONE' || status === 'CHECKED_OUT') {
+            if (visit.status !== 'DONE' && visit.status !== 'CHECKED_OUT') {
+                visit.check_out_time = new Date();
+            }
         }
 
         visit.status = status;
@@ -237,6 +243,12 @@ exports.scanVisit = async (req, res) => {
       return res.status(400).json({ message: 'Visitor has already checked out', visit });
     }
 
+    if (newStatus === 'CHECKED_IN' && visit.status !== 'CHECKED_IN') {
+        visit.check_in_time = new Date();
+    } else if ((newStatus === 'DONE' || newStatus === 'CHECKED_OUT') && visit.status !== 'DONE' && visit.status !== 'CHECKED_OUT') {
+        visit.check_out_time = new Date();
+    }
+    
     visit.status = newStatus;
     await visit.save();
 

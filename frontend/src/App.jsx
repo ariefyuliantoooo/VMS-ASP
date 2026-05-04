@@ -6,6 +6,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import VisitForm from './pages/VisitForm';
 import VisitDetail from './pages/VisitDetail';
@@ -44,6 +45,7 @@ const AppRoutes = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/register-visit" element={<GuestVisit />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             
             {/* Protected Routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

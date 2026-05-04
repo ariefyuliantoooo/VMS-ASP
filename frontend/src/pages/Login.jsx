@@ -56,7 +56,7 @@ const Login = () => {
             <LogIn className="h-24 w-24 text-gray-900" />
           </div>
 
-          <h3 className="text-xl font-bold text-gray-900 mb-6 relative">Sign in to your account</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6 relative">Sign in as Visitor</h3>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
@@ -105,6 +105,11 @@ const Login = () => {
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
+              </div>
+              <div className="flex justify-end mt-1">
+                <Link to="/forgot-password" className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                  Lupa Password?
+                </Link>
               </div>
             </div>
 
