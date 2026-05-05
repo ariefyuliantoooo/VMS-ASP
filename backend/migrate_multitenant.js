@@ -1,14 +1,21 @@
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env.production', override: true }); // Force load .env.production
+require('dotenv').config(); // Load .env for fallback
+
 const { Sequelize } = require('sequelize');
 
+let dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+    dbUrl = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+}
+
 // Create a direct connection to run schema modifications
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+const sequelize = new Sequelize(dbUrl, {
   dialect: 'postgres',
   dialectOptions: {
-    ssl: {
+    ssl: process.env.DB_SSL === 'true' || dbUrl.includes('supabase') ? {
       require: true,
       rejectUnauthorized: false
-    }
+    } : false
   },
   logging: console.log
 });
