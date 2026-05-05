@@ -7,6 +7,14 @@ const Visit = sequelize.define('Visit', {
     autoIncrement: true,
     primaryKey: true,
   },
+  tenant_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'tenants',
+      key: 'id'
+    }
+  },
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: true,

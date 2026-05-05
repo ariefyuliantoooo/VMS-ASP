@@ -8,9 +8,11 @@ const crypto = require('crypto');
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, full_name, company, phone, inviteToken } = req.body;
+    const { username, email, password, full_name, company, phone, inviteToken, tenant_id } = req.body;
 
     let assignedRole = 'USER';
+    let assignedTenant = tenant_id || 1; // Default to 1 or require it
+
 
     // Check if invite token passed
     if (inviteToken) {
@@ -18,6 +20,7 @@ exports.register = async (req, res) => {
         const decoded = jwt.verify(inviteToken, process.env.JWT_SECRET);
         if (decoded.role === 'STAFF' && decoded.type === 'INVITATION') {
           assignedRole = 'STAFF';
+          if (decoded.tenant_id) assignedTenant = decoded.tenant_id;
         }
       } catch (err) {
         await AuthLog.create({ action: 'REGISTER_FAILED', email, ip_address: req.ip, status: 'failed', details: 'Invalid invite token' });
@@ -53,6 +56,7 @@ exports.register = async (req, res) => {
       company,
       phone,
       role: assignedRole,
+      tenant_id: assignedTenant,
       is_verified: true // Account is active immediately
     });
 
@@ -117,7 +121,7 @@ exports.login = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email, full_name: user.full_name, role: user.role },
+      { id: user.id, username: user.username, email: user.email, full_name: user.full_name, role: user.role, tenant_id: user.tenant_id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -130,7 +134,8 @@ exports.login = async (req, res) => {
         username: user.username,
         email: user.email,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        tenant_id: user.tenant_id
       }
     });
   } catch (error) {
@@ -142,8 +147,14 @@ exports.login = async (req, res) => {
 // Get list of all staff members
 exports.getStaffList = async (req, res) => {
   try {
+    const tenant_id = req.query.tenant_id || (req.user ? req.user.tenant_id : null);
+    const whereClause = { role: 'STAFF' };
+    if (tenant_id) {
+        whereClause.tenant_id = tenant_id;
+    }
+
     const staff = await User.findAll({
-      where: { role: 'STAFF' },
+      where: whereClause,
       attributes: ['id', 'full_name'],
       order: [['full_name', 'ASC']]
     });
@@ -261,6 +272,7 @@ exports.createUser = async (req, res) => {
       role,
       company,
       phone,
+      tenant_id: req.user.role === 'SUPERADMIN' ? req.body.tenant_id || 1 : req.user.tenant_id,
       is_verified: true // Admins create verified users directly
     });
 

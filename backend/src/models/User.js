@@ -8,6 +8,14 @@ const User = sequelize.define('User', {
     autoIncrement: true,
     primaryKey: true,
   },
+  tenant_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Null for SUPERADMIN or before migration
+    references: {
+      model: 'tenants',
+      key: 'id'
+    }
+  },
   username: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -39,7 +47,7 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     defaultValue: 'USER',
     validate: {
-      isIn: [['USER', 'STAFF', 'SECURITY', 'ADMIN']]
+      isIn: [['USER', 'STAFF', 'SECURITY', 'ADMIN', 'SUPERADMIN']]
     }
   },
   is_verified: {

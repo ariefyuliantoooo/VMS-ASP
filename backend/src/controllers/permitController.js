@@ -26,6 +26,7 @@ exports.createPermit = async (req, res) => {
     }
 
     const newPermit = await WorkPermit.create({
+      tenant_id: req.user.tenant_id,
       visitor_id,
       worker_name,
       company,
@@ -57,11 +58,13 @@ exports.getAllPermits = async (req, res) => {
         return res.status(403).json({ message: 'Access denied. Visitors cannot view work permits.' });
     }
 
-    let visitWhereClause = {};
-    // If not admin/security, maybe we want to filter for the staff member?
-    // For now, let STAFF see all since they manage internal logistics.
+    let whereClause = {};
+    if (req.user.role !== 'SUPERADMIN') {
+        whereClause.tenant_id = req.user.tenant_id;
+    }
 
     const permits = await WorkPermit.findAll({
+      where: whereClause,
       include: [{ 
         model: Visit, 
         attributes: ['full_name', 'visit_purpose', 'visit_date', 'status'],

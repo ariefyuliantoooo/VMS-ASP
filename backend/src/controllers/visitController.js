@@ -9,6 +9,7 @@ exports.createVisit = async (req, res) => {
   try {
     const { full_name, company, phone, visit_purpose, person_to_meet, visit_date, location } = req.body;
     const user_id = req.user.id; // From auth middleware
+    const tenant_id = req.user.tenant_id || 1;
 
     // Generate unique ID for QR Code
     const uniqueId = crypto.randomUUID();
@@ -18,6 +19,7 @@ exports.createVisit = async (req, res) => {
 
     const newVisit = await Visit.create({
       user_id,
+      tenant_id,
       full_name,
       company,
       phone,
@@ -46,7 +48,7 @@ exports.createVisit = async (req, res) => {
 // Create a public visit (Guest registration)
 exports.createPublicVisit = async (req, res) => {
   try {
-    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date, location } = req.body;
+    const { full_name, company, phone, visit_purpose, person_to_meet, visit_date, location, tenant_id } = req.body;
 
     // Generate unique ID for QR Code
     const uniqueId = crypto.randomUUID();
@@ -56,6 +58,7 @@ exports.createPublicVisit = async (req, res) => {
 
     const newVisit = await Visit.create({
       user_id: null, // Guest
+      tenant_id: tenant_id || 1, // Require tenant_id from guest form
       full_name,
       company,
       phone,
@@ -81,7 +84,13 @@ exports.createPublicVisit = async (req, res) => {
 // Get all visits (for security dashboard or admin)
 exports.getAllVisits = async (req, res) => {
   try {
+    const whereClause = {};
+    if (req.user.role !== 'SUPERADMIN') {
+      whereClause.tenant_id = req.user.tenant_id;
+    }
+
     const visits = await Visit.findAll({
+      where: whereClause,
       include: [
         { model: User, attributes: ['username', 'email'] },
         { model: WorkPermit }
@@ -100,6 +109,9 @@ exports.getUserVisits = async (req, res) => {
     const { id, role, full_name } = req.user;
     
     let whereClause = { user_id: id };
+    if (req.user.role !== 'SUPERADMIN') {
+      whereClause.tenant_id = req.user.tenant_id;
+    }
     
     // If Staff, only show visits where they are the person to meet 
     // to search for the one they want to link a permit to.
@@ -108,7 +120,9 @@ exports.getUserVisits = async (req, res) => {
             person_to_meet: { [Op.iLike]: `%${full_name}%` }
         };
     } else if (role === 'SECURITY' || role === 'ADMIN') {
-        // Security and Admin see all
+        // Security and Admin see all for their tenant
+        whereClause = { tenant_id: req.user.tenant_id };
+    } else if (role === 'SUPERADMIN') {
         whereClause = {};
     }
 

@@ -11,19 +11,38 @@ const GuestVisit = () => {
         visit_purpose: '',
         person_to_meet: '',
         visit_date: new Date().toISOString().split('T')[0],
-        location: ''
+        location: '',
+        tenant_id: ''
     });
     const [staffList, setStaffList] = useState([]);
+    const [tenantList, setTenantList] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [fetchingStaff, setFetchingStaff] = useState(true);
+    const [fetchingStaff, setFetchingStaff] = useState(false);
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState(null); // { visit, qrCodeImage }
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchStaff = async () => {
+        const fetchTenants = async () => {
             try {
-                const res = await api.get('/users/staff');
+                const res = await api.get('/tenants');
+                setTenantList(res.data);
+            } catch (err) {
+                console.error("Failed to fetch tenants", err);
+            }
+        };
+        fetchTenants();
+    }, []);
+
+    useEffect(() => {
+        if (!formData.tenant_id) {
+            setStaffList([]);
+            return;
+        }
+        const fetchStaff = async () => {
+            setFetchingStaff(true);
+            try {
+                const res = await api.get(`/users/staff?tenant_id=${formData.tenant_id}`);
                 setStaffList(res.data);
             } catch (err) {
                 console.error("Failed to fetch staff list", err);
@@ -33,7 +52,7 @@ const GuestVisit = () => {
             }
         };
         fetchStaff();
-    }, []);
+    }, [formData.tenant_id]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

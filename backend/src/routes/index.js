@@ -4,6 +4,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const visitController = require('../controllers/visitController');
 const permitController = require('../controllers/permitController');
+const tenantRoutes = require('./tenantRoutes');
 
 const authMiddleware = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
@@ -97,5 +98,8 @@ router.delete('/visit/:id', authMiddleware, visitController.deleteVisit); // Adm
 // Work Permit Routes
 router.post('/permit', authMiddleware, upload.single('permit_file'), permitController.createPermit);
 router.get('/permit', authMiddleware, permitController.getAllPermits);
+
+// Tenant Routes
+router.use('/tenants', tenantRoutes);
 
 module.exports = router;

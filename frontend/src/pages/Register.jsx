@@ -10,8 +10,12 @@ const Register = () => {
     full_name: '',
     company: '',
     phone: '',
-    role: 'USER'
+    role: 'USER',
+    tenant_id: '',
+    new_tenant_name: ''
   });
+  const [tenantList, setTenantList] = useState([]);
+  const [isNewTenant, setIsNewTenant] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const { register } = useContext(AuthContext);
@@ -19,6 +23,18 @@ const Register = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const inviteToken = queryParams.get('token');
+
+  useEffect(() => {
+    const fetchTenants = async () => {
+        try {
+            const res = await api.get('/tenants');
+            setTenantList(res.data);
+        } catch (err) {
+            console.error("Failed to fetch tenants", err);
+        }
+    };
+    fetchTenants();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,10 +44,17 @@ const Register = () => {
     e.preventDefault();
     setError('');
     try {
-      await register({ ...formData, inviteToken });
+      let finalTenantId = formData.tenant_id;
+      // If creating new tenant, hit tenant API first (simulated here or modify register endpoint)
+      if (isNewTenant && formData.new_tenant_name) {
+          const tenantRes = await api.post('/tenants', { name: formData.new_tenant_name });
+          finalTenantId = tenantRes.data.id;
+      }
+      
+      await register({ ...formData, tenant_id: finalTenantId, inviteToken });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register');
+      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to register');
     }
   };
 
@@ -96,6 +119,38 @@ const Register = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Email address *</label>
               <input name="email" type="email" required value={formData.email} onChange={handleChange} className="input-field mt-1" />
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex items-center mb-4">
+                    <input 
+                        type="checkbox" 
+                        id="isNewTenant" 
+                        checked={isNewTenant}
+                        onChange={(e) => setIsNewTenant(e.target.checked)}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isNewTenant" className="ml-2 block text-sm text-gray-900">
+                        Saya ingin mendaftarkan Perusahaan / Tenant Baru
+                    </label>
+                </div>
+
+                {isNewTenant ? (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Nama Perusahaan / Tenant Baru *</label>
+                        <input name="new_tenant_name" type="text" required={isNewTenant} value={formData.new_tenant_name} onChange={handleChange} className="input-field mt-1" placeholder="Contoh: PT. Inovasi Bangsa" />
+                    </div>
+                ) : (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Pilih Perusahaan / Tenant *</label>
+                        <select name="tenant_id" required={!isNewTenant} value={formData.tenant_id} onChange={handleChange} className="input-field mt-1">
+                            <option value="">Pilih Tenant...</option>
+                            {tenantList.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">

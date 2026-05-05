@@ -14,6 +14,7 @@ import SecurityDashboard from './pages/SecurityDashboard';
 import PermitForm from './pages/PermitForm';
 import PermitList from './pages/PermitList';
 import AdminDashboard from './pages/AdminDashboard';
+import SuperadminDashboard from './pages/SuperadminDashboard';
 import GuestVisit from './pages/GuestVisit';
 
 // Protected Route Component
@@ -52,11 +53,12 @@ const AppRoutes = () => {
             <Route path="/visit/new" element={<ProtectedRoute><VisitForm /></ProtectedRoute>} />
             <Route path="/visit/:id" element={<ProtectedRoute><VisitDetail /></ProtectedRoute>} />
             
-            <Route path="/security" element={<RoleProtectedRoute allowedRoles={['SECURITY', 'ADMIN']}><SecurityDashboard /></RoleProtectedRoute>} />
-            <Route path="/admin" element={<RoleProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></RoleProtectedRoute>} />
+            <Route path="/security" element={<RoleProtectedRoute allowedRoles={['SECURITY', 'ADMIN', 'SUPERADMIN']}><SecurityDashboard /></RoleProtectedRoute>} />
+            <Route path="/admin" element={<RoleProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></RoleProtectedRoute>} />
+            <Route path="/superadmin" element={<RoleProtectedRoute allowedRoles={['SUPERADMIN']}><SuperadminDashboard /></RoleProtectedRoute>} />
             
-            <Route path="/permits" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'SECURITY']}><PermitList /></RoleProtectedRoute>} />
-            <Route path="/permit/new" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN']}><PermitForm /></RoleProtectedRoute>} />
+            <Route path="/permits" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'SECURITY', 'SUPERADMIN']}><PermitList /></RoleProtectedRoute>} />
+            <Route path="/permit/new" element={<RoleProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'SUPERADMIN']}><PermitForm /></RoleProtectedRoute>} />
             
             {/* Catch All */}
             <Route path="*" element={<Navigate to="/" replace />} />

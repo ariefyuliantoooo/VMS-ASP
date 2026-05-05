@@ -7,6 +7,14 @@ const WorkPermit = sequelize.define('WorkPermit', {
     autoIncrement: true,
     primaryKey: true,
   },
+  tenant_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'tenants',
+      key: 'id'
+    }
+  },
   visitor_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
