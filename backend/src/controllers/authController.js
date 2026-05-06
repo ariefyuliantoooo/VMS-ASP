@@ -220,8 +220,16 @@ exports.verifyEmail = async (req, res) => {
 // Admin: Get all users
 exports.getAllUsers = async (req, res) => {
   try {
-    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
-    const users = await User.findAll({ order: [['created_at', 'DESC']], attributes: { exclude: ['password'] } });
+    const whereClause = {};
+    if (req.user.role !== 'SUPERADMIN') {
+      whereClause.tenant_id = req.user.tenant_id;
+    }
+
+    const users = await User.findAll({ 
+      where: whereClause,
+      order: [['created_at', 'DESC']], 
+      attributes: { exclude: ['password'] } 
+    });
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -231,9 +239,14 @@ exports.getAllUsers = async (req, res) => {
 // Admin: Delete user
 exports.deleteUser = async (req, res) => {
   try {
-    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Check tenant isolation
+    if (req.user.role !== 'SUPERADMIN' && user.tenant_id !== req.user.tenant_id) {
+        return res.status(403).json({ message: 'Forbidden: Access denied to this tenant' });
+    }
+
     await user.destroy();
     res.json({ message: 'User deleted' });
   } catch (error) {
@@ -244,8 +257,16 @@ exports.deleteUser = async (req, res) => {
 // Admin: Get Auth Logs
 exports.getAuthLogs = async (req, res) => {
   try {
-    if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
-    const logs = await AuthLog.findAll({ order: [['created_at', 'DESC']], limit: 100 });
+    const whereClause = {};
+    if (req.user.role !== 'SUPERADMIN') {
+      whereClause.tenant_id = req.user.tenant_id;
+    }
+
+    const logs = await AuthLog.findAll({ 
+      where: whereClause,
+      order: [['created_at', 'DESC']], 
+      limit: 100 
+    });
     res.json(logs);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching logs' });
