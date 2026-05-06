@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import StatsCard from '../components/StatsCard';
 import VisitorCard from '../components/VisitorCard';
 import { AuthContext } from '../context/AuthContext';
-import { ShieldAlert, Users, Clock3, LogIn, LogOut, Copy, Check, Link as LinkIcon, Database, Trash2 } from 'lucide-react';
+import { ShieldAlert, Users, Clock3, LogIn, LogOut, Copy, Check, Link as LinkIcon, Database, Trash2, Edit } from 'lucide-react';
 
 const AdminDashboard = () => {
     const { user } = useContext(AuthContext);
@@ -19,6 +19,9 @@ const AdminDashboard = () => {
     const [logs, setLogs] = useState([]);
     
     // UI States
+    const [tenant, setTenant]   = useState(null);
+    const [isEditingTenant, setIsEditingTenant] = useState(false);
+    const [editTenantName, setEditTenantName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError]     = useState('');
     const [deletingId, setDeletingId] = useState(null);
@@ -46,18 +49,40 @@ const AdminDashboard = () => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [resVisits, resUsers, resLogs] = await Promise.all([
+            const promises = [
                 api.get('/visits'),
                 api.get('/users'),
                 api.get('/auth/logs')
-            ]);
-            setVisits(resVisits.data);
-            setUsersList(resUsers.data);
-            setLogs(resLogs.data);
+            ];
+            
+            if (user?.tenant_id) {
+                promises.push(api.get(`/tenants/${user.tenant_id}`));
+            }
+
+            const results = await Promise.all(promises);
+            setVisits(results[0].data);
+            setUsersList(results[1].data);
+            setLogs(results[2].data);
+            
+            if (results[3]) {
+                setTenant(results[3].data);
+                setEditTenantName(results[3].data.name);
+            }
         } catch {
             setError('Gagal mengambil data dari server.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateTenant = async () => {
+        if (!editTenantName.trim()) return;
+        try {
+            await api.put(`/tenants/${tenant.id}`, { name: editTenantName });
+            setTenant({ ...tenant, name: editTenantName });
+            setIsEditingTenant(false);
+        } catch (err) {
+            alert('Gagal memperbarui nama perusahaan');
         }
     };
 
@@ -141,12 +166,37 @@ const AdminDashboard = () => {
 
             <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-5 pb-24 space-y-5">
                 {/* Header */}
-                <div>
-                    <div className="flex items-center gap-2">
-                        <ShieldAlert className="h-6 w-6 text-indigo-600" />
-                        <h1 className="text-xl font-black text-gray-900">Admin Control Panel</h1>
+                <div className="flex justify-between items-end">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <ShieldAlert className="h-6 w-6 text-indigo-600" />
+                            <h1 className="text-xl font-black text-gray-900">Admin Control Panel</h1>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1 ml-8">Atur Kunjungan, Akun Pengguna, dan Aktivitas Keamanan</p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1 ml-8">Atur Kunjungan, Akun Pengguna, dan Aktivitas Keamanan</p>
+                    {tenant && (
+                        <div className="text-right flex flex-col items-end">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Perusahaan Aktif</p>
+                            {isEditingTenant ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                    <input 
+                                        type="text" 
+                                        value={editTenantName} 
+                                        onChange={(e) => setEditTenantName(e.target.value)}
+                                        className="px-2 py-1 border border-indigo-200 rounded-lg text-sm font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        autoFocus
+                                    />
+                                    <button onClick={handleUpdateTenant} className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-bold">Simpan</button>
+                                    <button onClick={() => { setIsEditingTenant(false); setEditTenantName(tenant.name); }} className="text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-300 font-bold">Batal</button>
+                                </div>
+                            ) : (
+                                <div className="group flex items-center gap-2 cursor-pointer" onClick={() => setIsEditingTenant(true)}>
+                                    <p className="text-lg font-black text-indigo-700 group-hover:text-indigo-800 transition-colors">{tenant.name}</p>
+                                    <Edit className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {error && (
