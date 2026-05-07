@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd vms-next && npm install && npm run build",
+  "outputDirectory": "vms-next/.next",
+  "installCommand": "cd vms-next && npm install",
+  "framework": "nextjs"
+}
