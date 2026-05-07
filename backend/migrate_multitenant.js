@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '.env.production', override: true }); // Force load .env.production
+require('dotenv').config({ path: '.env', override: true }); // Force load .env for local
 require('dotenv').config(); // Load .env for fallback
 
 const { Sequelize } = require('sequelize');

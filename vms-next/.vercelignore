@@ -1,0 +1,15 @@
+node_modules
+.next
+.vercel
+.git
+.env
+.env.local
+migrations
+scripts
+tests
+README.md
+TEMPLATE_USAGE.md
+backend
+frontend
+database
+examples
