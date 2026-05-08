@@ -1,6 +1,15 @@
 {
-  "buildCommand": "cd vms-next && npm run build",
-  "outputDirectory": "vms-next/.next",
-  "framework": "nextjs",
-  "installCommand": "cd vms-next && npm install"
+  "version": 2,
+  "builds": [
+    {
+      "src": "vms-next/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "vms-next/$1"
+    }
+  ]
 }

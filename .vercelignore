@@ -8,6 +8,10 @@ backend
 frontend
 database
 examples
-tests
-README.md
-TEMPLATE_USAGE.md
+vms-next/node_modules
+vms-next/.next
+vms-next/.vercel
+vms-next/.env.local
+vms-next/tests
+vms-next/scripts
+vms-next/migrations
